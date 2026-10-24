@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Business Dashboard Suite &mdash; 30 industry demos</title>
+<meta name="description" content="Thirty Google Sheets + Apps Script business dashboards: agency, real estate, clinic, restaurant, hotel, factory, pharmacy, poultry, fuel station, MSP, workshop, printing press, apparel, bakery, courier, design studio, vet, solar and more. Live demos, realistic sample data, no licences.">
+<meta property="og:title" content="Business Dashboard Suite — 30 industry demos">
+<meta property="og:description" content="A working dashboard per industry, each fed by one Google Sheet. Built with Apps Script and a single HTML file.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%237c6cf7'/><path d='M24 70l14-18 10 10 18-24 10 8' stroke='white' stroke-width='7' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<style>
+:root{
+  --bg:#070b16; --surface:#0f1626; --surface-2:#131c2f; --line:#1e2942;
+  --ink:#eef2fb; --ink-2:#c3cce0; --muted:#8e9bb5;
+  --brand:#7c6cf7; --brand-2:#a78bfa; --ok:#34d399;
+  --radius:20px;
+  --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(1100px 600px at 10% -10%, rgba(124,108,247,.22), transparent 70%),
+    radial-gradient(900px 520px at 95% 0%, rgba(14,165,233,.14), transparent 68%);}
+.wrap{max-width:1280px;margin:0 auto;padding:34px 24px 70px}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,p{margin:0}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:640;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--brand-2);background:rgba(124,108,247,.12);
+  border:1px solid rgba(124,108,247,.28);padding:6px 12px;border-radius:999px}
+.hero{margin:22px 0 30px;max-width:860px}
+.hero h1{font-size:clamp(30px,4.4vw,50px);line-height:1.06;font-weight:740;letter-spacing:-.035em}
+.hero h1 em{font-style:normal;background:linear-gradient(100deg,#a78bfa,#38bdf8);-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.hero p{margin-top:16px;color:var(--ink-2);font-size:15.5px;max-width:68ch}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:118px}
+.stat b{display:block;font-size:19px;letter-spacing:-.02em}
+.stat span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.group{margin-top:34px}
+.group h2{font-size:13px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+  display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.group h2 span{font-size:10.5px;font-weight:700;letter-spacing:0;color:var(--brand-2);
+  background:rgba(124,108,247,.14);border:1px solid rgba(124,108,247,.28);border-radius:999px;padding:1px 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+  transition:transform .22s cubic-bezier(.2,.7,.3,1),border-color .22s,box-shadow .22s;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-4px);border-color:#2b3a5c;box-shadow:0 26px 60px -30px rgba(0,0,0,.9)}
+.thumb{position:relative;aspect-ratio:16/10.4;background:var(--surface-2);border-bottom:1px solid var(--line);
+  overflow:hidden;display:block}
+.thumb img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;
+  transition:transform .5s cubic-bezier(.2,.7,.3,1)}
+.card:hover .thumb img{transform:scale(1.03)}
+.thumb .num{position:absolute;left:12px;top:12px;font-size:10.5px;font-weight:700;letter-spacing:.08em;
+  background:rgba(7,11,22,.82);color:#fff;padding:4px 9px;border-radius:8px}
+.thumb .open{position:absolute;right:12px;bottom:12px;font-size:11px;font-weight:640;color:#fff;
+  background:rgba(7,11,22,.85);padding:5px 10px;border-radius:8px;
+  opacity:0;transform:translateY(4px);transition:.2s}
+.card:hover .thumb .open{opacity:1;transform:none}
+.body{padding:15px 16px 16px;display:flex;flex-direction:column;gap:9px;flex:1}
+.head{display:flex;align-items:center;gap:10px}
+.mark{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 32px;font-size:15px}
+.body h3{font-size:14.5px;font-weight:660;letter-spacing:-.015em}
+.body .tag{font-size:11.5px;color:var(--muted);line-height:1.45;min-height:34px}
+.metrics{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto}
+.metrics span{font-size:10px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);
+  padding:3px 7px;border-radius:6px;white-space:nowrap}
+.footrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:9px;
+  border-top:1px solid var(--line);margin-top:4px}
+.footrow .rows{font-size:10.5px;color:var(--muted)}
+.footrow .val{font-size:12px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+.footrow .val small{font-weight:500;color:var(--muted);font-size:10px;margin-left:4px}
+.howto{margin-top:56px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px}
+.howto h2{font-size:20px;font-weight:700;letter-spacing:-.025em}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:18px}
+.cols h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--brand-2);margin-bottom:6px}
+.cols p{font-size:13px;color:var(--ink-2)}
+footer{margin-top:34px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;
+  font-size:11.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:18px}
+code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-size:.92em}
+@media(max-width:600px){.wrap{padding:22px 14px 50px}.grid{grid-template-columns:1fr}.hero p{font-size:14.5px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">Google Sheets &middot; Apps Script &middot; HTML</span>
+
+  <div class="hero">
+    <h1>Thirty dashboards.<br><em>One spreadsheet</em> each.</h1>
+    <p>
+      Every demo below is a working dashboard fed by a Google Sheet &mdash; no Looker Studio licence,
+      no connectors, no per-seat pricing. Each trade gets its own layout, its own measuring units and
+      the six numbers that actually decide its week, with 112,183 rows of seasonal,
+      benchmark-checked sample data behind it.
+    </p>
+    <div class="stats">
+      <div class="stat"><b>30</b><span>Industries</span></div>
+      <div class="stat"><b>112,183</b><span>Sample rows</span></div>
+      <div class="stat"><b>6</b><span>KPIs each</span></div>
+      <div class="stat"><b>8</b><span>Layouts</span></div>
+      <div class="stat"><b>18</b><span>Months history</span></div>
+      <div class="stat"><b>0</b><span>Dependencies</span></div>
+    </div>
+  </div>
+
+  <section class="group">
+    <h2>Marketing &amp; sales <span>3</span></h2>
+    <div class="grid">
+    <a class="card" href="../demos/01_Digital-Marketing-Agency.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/01_Digital-Marketing-Agency.png" alt="Digital Marketing Agency dashboard preview" loading="lazy">
+        <span class="num">01</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#6366f1,#6366f1bb)">🎯</span>
+          <h3>Digital Marketing Agency</h3>
+        </span>
+        <span class="tag">Pipeline, retainers and cash collection for a growth agency</span>
+        <span class="metrics"><span>Pipeline Value</span><span>Active Retainers</span><span>Monthly Recurring</span><span>Collected This Month</span><span>Overdue Receivables</span><span>Follow-ups Due</span></span>
+        <span class="footrow">
+          <span class="rows">1,250 rows &middot; KPI grid</span>
+          <span class="val">Rs 112.4M<small>Pipeline Value</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/18_Recruitment-Agency.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/18_Recruitment-Agency.png" alt="Recruitment Agency dashboard preview" loading="lazy">
+        <span class="num">18</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#7c3aed,#7c3aedbb)">👥</span>
+          <h3>Recruitment Agency</h3>
+        </span>
+        <span class="tag">Fill rate, time-to-fill and fees for a contingency recruiter</span>
+        <span class="metrics"><span>Open Roles</span><span>Fill Rate</span><span>Time to Fill</span><span>Fees · This Month</span><span>Average Fee %</span><span>Invoices Overdue</span></span>
+        <span class="footrow">
+          <span class="rows">1,900 rows &middot; Ledger</span>
+          <span class="val">Rs 4.4M<small>Fees · This Month</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/24_Printing-Press-Offset.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/24_Printing-Press-Offset.png" alt="Printing Press · Offset dashboard preview" loading="lazy">
+        <span class="num">24</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#be123c,#be123cbb)">🖨️</span>
+          <h3>Printing Press · Offset</h3>
+        </span>
+        <span class="tag">Impressions, waste and machine uptime for an offset press</span>
+        <span class="metrics"><span>Impressions · MTD</span><span>Waste</span><span>Machine Uptime</span><span>Average Job Value</span><span>Jobs in Prepress</span><span>Work in Progress</span></span>
+        <span class="footrow">
+          <span class="rows">826 rows &middot; Ledger</span>
+          <span class="val">Rs 103K<small>Average Job Value</small></span>
+        </span>
+      </span>
+    </a>
+    </div>
+  </section>
+  <section class="group">
+    <h2>Property &amp; design <span>3</span></h2>
+    <div class="grid">
+    <a class="card" href="../demos/02_Real-Estate-Karachi.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/02_Real-Estate-Karachi.png" alt="Real Estate · Karachi dashboard preview" loading="lazy">
+        <span class="num">02</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#0ea5e9,#0ea5e9bb)">🏠</span>
+          <h3>Real Estate · Karachi</h3>
+        </span>
+        <span class="tag">Listings, enquiries and commissions across a Karachi agency</span>
+        <span class="metrics"><span>Active Listings</span><span>Portfolio Value</span><span>Enquiries (30d)</span><span>Commission Earned</span><span>Avg Days on Market</span><span>Avg Commission / Deal</span></span>
+        <span class="footrow">
+          <span class="rows">895 rows &middot; Board</span>
+          <span class="val">Rs 8.19B<small>Portfolio Value</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/11_Construction-Contractor.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/11_Construction-Contractor.png" alt="Construction Contractor dashboard preview" loading="lazy">
+        <span class="num">11</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#b45309,#b45309bb)">🏗️</span>
+          <h3>Construction Contractor</h3>
+        </span>
+        <span class="tag">Project margin, billing and receivables for a contractor</span>
+        <span class="metrics"><span>Active Projects</span><span>Contract Backlog</span><span>Billed This Month</span><span>Receivables</span><span>Gross Margin</span><span>Over-budget Projects</span></span>
+        <span class="footrow">
+          <span class="rows">1,262 rows &middot; Single column</span>
+          <span class="val">Rs 2.27B<small>Contract Backlog</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/28_Architecture-Design-Studio.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/28_Architecture-Design-Studio.png" alt="Architecture &amp; Design Studio dashboard preview" loading="lazy">
+        <span class="num">28</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#334155,#334155bb)">📐</span>
+          <h3>Architecture &amp; Design Studio</h3>
+        </span>
+        <span class="tag">Billable utilisation, fees and WIP for a design studio</span>
+        <span class="metrics"><span>Billable Utilisation</span><span>Fees Invoiced · MTD</span><span>Fee per sqft</span><span>Work in Progress</span><span>Receivables Overdue</span><span>Collection Days</span></span>
+        <span class="footrow">
+          <span class="rows">3,176 rows &middot; Headline KPI</span>
+          <span class="val">Rs 4.6M<small>Fees Invoiced · MTD</small></span>
+        </span>
+      </span>
+    </a>
+    </div>
+  </section>
+  <section class="group">
+    <h2>Retail &amp; food <span>5</span></h2>
+    <div class="grid">
+    <a class="card" href="../demos/04_Retail-Boutique-E-commerce.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/04_Retail-Boutique-E-commerce.png" alt="Retail Boutique · E-commerce dashboard preview" loading="lazy">
+        <span class="num">04</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#ec4899,#ec4899bb)">🛍️</span>
+          <h3>Retail Boutique · E-commerce</h3>
+        </span>
+        <span class="tag">Revenue, margin and repeat buyers for an online boutique</span>
+        <span class="metrics"><span>Revenue</span><span>Orders</span><span>Average Order Value</span><span>Gross Margin</span><span>Repeat Customers</span><span>Returns &amp; Refunds</span></span>
+        <span class="footrow">
+          <span class="rows">3,230 rows &middot; Ledger</span>
+          <span class="val">Rs 59.1M<small>Revenue</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/05_Restaurant-Caf.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/05_Restaurant-Caf.png" alt="Restaurant &amp; Café dashboard preview" loading="lazy">
+        <span class="num">05</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#f97316,#f97316bb)">☕</span>
+          <h3>Restaurant &amp; Café</h3>
+        </span>
+        <span class="tag">Daily sales, covers and prime cost for a café or restaurant</span>
+        <span class="metrics"><span>Revenue (30d)</span><span>Average Check</span><span>Food Cost</span><span>Prime Cost</span><span>Delivery Share</span><span>Operating Expenses</span></span>
+        <span class="footrow">
+          <span class="rows">946 rows &middot; Instrument strip</span>
+          <span class="val">Rs 7.2M<small>Revenue (30d)</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/26_Bakery-Confectionery.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/26_Bakery-Confectionery.png" alt="Bakery &amp; Confectionery dashboard preview" loading="lazy">
+        <span class="num">26</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#b45309,#b45309bb)">🥖</span>
+          <h3>Bakery &amp; Confectionery</h3>
+        </span>
+        <span class="tag">Baked weight, wastage and cake orders for a retail bakery</span>
+        <span class="metrics"><span>Baked per Day</span><span>Wastage</span><span>Sell-through</span><span>Counter Revenue · 30d</span><span>Cake Orders Open</span><span>Baked Goods Value</span></span>
+        <span class="footrow">
+          <span class="rows">3,078 rows &middot; Daily charts + rail</span>
+          <span class="val">Rs 3.3M<small>Counter Revenue · 30d</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/19_Community-Pharmacy.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/19_Community-Pharmacy.png" alt="Community Pharmacy dashboard preview" loading="lazy">
+        <span class="num">19</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#059669,#059669bb)">💊</span>
+          <h3>Community Pharmacy</h3>
+        </span>
+        <span class="tag">Scripts, margins and stock cover for a high-street pharmacy</span>
+        <span class="metrics"><span>Scripts per Day</span><span>Gross Margin</span><span>Stock Cover</span><span>Below Reorder</span><span>Expiry Risk (90d)</span><span>OTC Share</span></span>
+        <span class="footrow">
+          <span class="rows">1,096 rows &middot; Daily charts + rail</span>
+          <span class="val">Rs 90K<small>Expiry Risk (90d)</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/21_Fuel-Station-Retail-Pump.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/21_Fuel-Station-Retail-Pump.png" alt="Fuel Station · Retail Pump dashboard preview" loading="lazy">
+        <span class="num">21</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#dc2626,#dc2626bb)">⛽</span>
+          <h3>Fuel Station · Retail Pump</h3>
+        </span>
+        <span class="tag">Litres, per-litre dealer margin and shop sales for a retail pump</span>
+        <span class="metrics"><span>Litres per Day</span><span>Dealer Margin</span><span>Fuel Gross Profit · 30d</span><span>Shop Sales · 30d</span><span>Credit Outstanding</span><span>Gross Profit · 30d</span></span>
+        <span class="footrow">
+          <span class="rows">2,616 rows &middot; Board</span>
+          <span class="val">Rs 10.3M<small>Fuel Gross Profit · 30d</small></span>
+        </span>
+      </span>
+    </a>
+    </div>
+  </section>
+  <section class="group">
+    <h2>Health &amp; care <span>2</span></h2>
+    <div class="grid">
+    <a class="card" href="../demos/09_Clinic-Dental.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/09_Clinic-Dental.png" alt="Clinic · Dental dashboard preview" loading="lazy">
+        <span class="num">09</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#0d9488,#0d9488bb)">🦷</span>
+          <h3>Clinic · Dental</h3>
+        </span>
+        <span class="tag">Production, collections and no-shows for a dental practice</span>
+        <span class="metrics"><span>New Patients (30d)</span><span>Appointments (30d)</span><span>No-show Rate</span><span>Production (30d)</span><span>Collection Rate</span><span>AR over 90 days</span></span>
+        <span class="footrow">
+          <span class="rows">3,082 rows &middot; KPI grid</span>
+          <span class="val">Rs 8.2M<small>Production (30d)</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/29_Veterinary-Clinic.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/29_Veterinary-Clinic.png" alt="Veterinary Clinic dashboard preview" loading="lazy">
+        <span class="num">29</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#16a34a,#16a34abb)">🐾</span>
+          <h3>Veterinary Clinic</h3>
+        </span>
+        <span class="tag">Consults, species mix and vaccination coverage for a vet clinic</span>
+        <span class="metrics"><span>Consults per Day</span><span>Average Bill</span><span>Vaccination Uptake</span><span>Returning Patients</span><span>Pharmacy Stock</span><span>Unpaid Visits</span></span>
+        <span class="footrow">
+          <span class="rows">8,980 rows &middot; KPI grid</span>
+          <span class="val">Rs 6K<small>Average Bill</small></span>
+        </span>
+      </span>
+    </a>
+    </div>
+  </section>
+  <section class="group">
+    <h2>Education &amp; people <span>2</span></h2>
+    <div class="grid">
+    <a class="card" href="../demos/03_Coaching-Courses.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/03_Coaching-Courses.png" alt="Coaching &amp; Courses dashboard preview" loading="lazy">
+        <span class="num">03</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#8b5cf6,#8b5cf6bb)">🎓</span>
+          <h3>Coaching &amp; Courses</h3>
+        </span>
+        <span class="tag">Cohort revenue, attendance and completion for a coaching business</span>
+        <span class="metrics"><span>Active Students</span><span>Collected Revenue</span><span>Attendance Rate</span><span>Avg Fee / Student</span><span>Outstanding Fees</span><span>Completion Rate</span></span>
+        <span class="footrow">
+          <span class="rows">3,440 rows &middot; KPI grid</span>
+          <span class="val">Rs 22.8M<small>Collected Revenue</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/08_School-Academy.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/08_School-Academy.png" alt="School · Academy dashboard preview" loading="lazy">
+        <span class="num">08</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#0284c7,#0284c7bb)">🏫</span>
+          <h3>School · Academy</h3>
+        </span>
+        <span class="tag">Enrollment, fee collection and attendance for a school</span>
+        <span class="metrics"><span>Enrolled Students</span><span>Fee Collected</span><span>Collection Rate</span><span>Outstanding Arrears</span><span>Attendance Rate</span><span>Avg Monthly Fee</span></span>
+        <span class="footrow">
+          <span class="rows">5,612 rows &middot; Scorecard</span>
+          <span class="val">Rs 43.1M<small>Fee Collected</small></span>
+        </span>
+      </span>
+    </a>
+    </div>
+  </section>
+  <section class="group">
+    <h2>Fitness, beauty &amp; events <span>3</span></h2>
+    <div class="grid">
+    <a class="card" href="../demos/07_Gym-Fitness-Studio.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/07_Gym-Fitness-Studio.png" alt="Gym · Fitness Studio dashboard preview" loading="lazy">
+        <span class="num">07</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#16a34a,#16a34abb)">🏋️</span>
+          <h3>Gym · Fitness Studio</h3>
+        </span>
+        <span class="tag">Members, MRR and churn for a boutique fitness studio</span>
+        <span class="metrics"><span>Active Members</span><span>Monthly Recurring</span><span>Monthly Churn</span><span>Visits / Member / Week</span><span>Renewals Due (14d)</span><span>Personal Training</span></span>
+        <span class="footrow">
+          <span class="rows">6,880 rows &middot; Headline KPI</span>
+          <span class="val">Rs 3.6M<small>Monthly Recurring</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/06_Salon-Spa-Aesthetics.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/06_Salon-Spa-Aesthetics.png" alt="Salon · Spa · Aesthetics dashboard preview" loading="lazy">
+        <span class="num">06</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#db2777,#db2777bb)">✂️</span>
+          <h3>Salon · Spa · Aesthetics</h3>
+        </span>
+        <span class="tag">Bookings, ticket size and rebooking for a salon or medspa</span>
+        <span class="metrics"><span>Bookings (30d)</span><span>Revenue (30d)</span><span>Average Ticket</span><span>No-show &amp; Cancel</span><span>Rebooking Rate</span><span>Chair Utilisation</span></span>
+        <span class="footrow">
+          <span class="rows">4,760 rows &middot; Daily charts + rail</span>
+          <span class="val">Rs 4.7M<small>Revenue (30d)</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/12_Event-Photography-Studio.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/12_Event-Photography-Studio.png" alt="Event Photography Studio dashboard preview" loading="lazy">
+        <span class="num">12</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#7c3aed,#7c3aedbb)">📸</span>
+          <h3>Event Photography Studio</h3>
+        </span>
+        <span class="tag">Seasonal bookings, package value and delivery pipeline</span>
+        <span class="metrics"><span>Events (30d)</span><span>Revenue This Year</span><span>Average Package</span><span>Booked Pipeline</span><span>Pending Deliveries</span><span>Referral Share</span></span>
+        <span class="footrow">
+          <span class="rows">890 rows &middot; Daily charts + rail</span>
+          <span class="val">Rs 50.3M<small>Revenue This Year</small></span>
+        </span>
+      </span>
+    </a>
+    </div>
+  </section>
+  <section class="group">
+    <h2>Travel &amp; hospitality <span>2</span></h2>
+    <div class="grid">
+    <a class="card" href="../demos/10_Travel-Agency.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/10_Travel-Agency.png" alt="Travel Agency dashboard preview" loading="lazy">
+        <span class="num">10</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#0891b2,#0891b2bb)">✈️</span>
+          <h3>Travel Agency</h3>
+        </span>
+        <span class="tag">Bookings, GMV and deposits for a travel agency</span>
+        <span class="metrics"><span>Bookings (30d)</span><span>Gross Booking Value</span><span>Commission Earned</span><span>Average Booking</span><span>Cancellation Rate</span><span>Pending Deposits</span></span>
+        <span class="footrow">
+          <span class="rows">1,268 rows &middot; Board</span>
+          <span class="val">Rs 545.1M<small>Gross Booking Value</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/16_Boutique-Hotel-Islamabad.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/16_Boutique-Hotel-Islamabad.png" alt="Boutique Hotel · Islamabad dashboard preview" loading="lazy">
+        <span class="num">16</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#0891b2,#0891b2bb)">🛏️</span>
+          <h3>Boutique Hotel · Islamabad</h3>
+        </span>
+        <span class="tag">Occupancy, ADR and RevPAR for a 44-room boutique property</span>
+        <span class="metrics"><span>Occupancy · 30 days</span><span>ADR</span><span>RevPAR</span><span>Room Revenue · This Month</span><span>Outstanding Folios</span><span>Average Length of Stay</span></span>
+        <span class="footrow">
+          <span class="rows">5,504 rows &middot; Headline KPI</span>
+          <span class="val">Rs 34K<small>ADR</small></span>
+        </span>
+      </span>
+    </a>
+    </div>
+  </section>
+  <section class="group">
+    <h2>Industrial &amp; trades <span>5</span></h2>
+    <div class="grid">
+    <a class="card" href="../demos/17_Manufacturing-Plant-Plastics.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/17_Manufacturing-Plant-Plastics.png" alt="Manufacturing Plant · Plastics dashboard preview" loading="lazy">
+        <span class="num">17</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#f97316,#f97316bb)">🏭</span>
+          <h3>Manufacturing Plant · Plastics</h3>
+        </span>
+        <span class="tag">OEE, scrap and downtime for a three-line moulding plant</span>
+        <span class="metrics"><span>OEE</span><span>Availability</span><span>Performance</span><span>Quality</span><span>Good Output · MTD</span><span>Value Past Due</span></span>
+        <span class="footrow">
+          <span class="rows">2,336 rows &middot; Instrument strip</span>
+          <span class="val">Rs 58.5M<small>Value Past Due</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/25_Garment-Manufacturing-Unit.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/25_Garment-Manufacturing-Unit.png" alt="Garment Manufacturing Unit dashboard preview" loading="lazy">
+        <span class="num">25</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#0d9488,#0d9488bb)">👕</span>
+          <h3>Garment Manufacturing Unit</h3>
+        </span>
+        <span class="tag">Line efficiency, defects and on-time shipment for a garment unit</span>
+        <span class="metrics"><span>Line Efficiency</span><span>DHU</span><span>Rework Rate</span><span>Order Book</span><span>On-time Shipment</span><span>Pieces · 30 days</span></span>
+        <span class="footrow">
+          <span class="rows">1,756 rows &middot; Scorecard</span>
+          <span class="val">Rs 1.75B<small>Order Book</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/20_Broiler-Poultry-Farm.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/20_Broiler-Poultry-Farm.png" alt="Broiler Poultry Farm dashboard preview" loading="lazy">
+        <span class="num">20</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#ca8a04,#ca8a04bb)">🐔</span>
+          <h3>Broiler Poultry Farm</h3>
+        </span>
+        <span class="tag">FCR, mortality and live weight per flock cycle</span>
+        <span class="metrics"><span>Feed Conversion (FCR)</span><span>Mortality</span><span>Average Live Weight</span><span>Birds in Shed</span><span>Feed Cost / kg Gain</span><span>Realised Rate / kg</span></span>
+        <span class="footrow">
+          <span class="rows">785 rows &middot; Scorecard</span>
+          <span class="val">Rs 277<small>Feed Cost / kg Gain</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/23_Auto-Workshop-Dealership.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/23_Auto-Workshop-Dealership.png" alt="Auto Workshop &amp; Dealership dashboard preview" loading="lazy">
+        <span class="num">23</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#475569,#475569bb)">🔧</span>
+          <h3>Auto Workshop &amp; Dealership</h3>
+        </span>
+        <span class="tag">Job cards, bay utilisation and parts margin for a service centre</span>
+        <span class="metrics"><span>Job Cards · MTD</span><span>Bay Utilisation</span><span>Average Ticket</span><span>Parts Margin</span><span>Vehicles in WIP</span><span>Comeback Rate</span></span>
+        <span class="footrow">
+          <span class="rows">10,300 rows &middot; Instrument strip</span>
+          <span class="val">Rs 44K<small>Average Ticket</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/30_Solar-EPC-Installer.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/30_Solar-EPC-Installer.png" alt="Solar EPC Installer dashboard preview" loading="lazy">
+        <span class="num">30</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#eab308,#eab308bb)">☀️</span>
+          <h3>Solar EPC Installer</h3>
+        </span>
+        <span class="tag">kW installed, cost per watt and net-metering approvals</span>
+        <span class="metrics"><span>kW Installed · MTD</span><span>Cost per Watt</span><span>Average System</span><span>Pipeline</span><span>Net-Metering Pending</span><span>Receivable</span></span>
+        <span class="footrow">
+          <span class="rows">1,250 rows &middot; Board</span>
+          <span class="val">Rs 181M<small>Receivable</small></span>
+        </span>
+      </span>
+    </a>
+    </div>
+  </section>
+  <section class="group">
+    <h2>Technology &amp; services <span>5</span></h2>
+    <div class="grid">
+    <a class="card" href="../demos/13_SaaS-Software.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/13_SaaS-Software.png" alt="SaaS · Software dashboard preview" loading="lazy">
+        <span class="num">13</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#2563eb,#2563ebbb)">☁️</span>
+          <h3>SaaS · Software</h3>
+        </span>
+        <span class="tag">MRR, retention and support load for a software business</span>
+        <span class="metrics"><span>MRR</span><span>Net Revenue Retention</span><span>Logo Churn (30d)</span><span>ARPA</span><span>MRR Growth (12m)</span><span>Open Tickets</span></span>
+        <span class="footrow">
+          <span class="rows">2,820 rows &middot; Headline KPI</span>
+          <span class="val">Rs 14.5M<small>MRR</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/22_Managed-IT-Services-MSP.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/22_Managed-IT-Services-MSP.png" alt="Managed IT Services · MSP dashboard preview" loading="lazy">
+        <span class="num">22</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#2563eb,#2563ebbb)">🖥️</span>
+          <h3>Managed IT Services · MSP</h3>
+        </span>
+        <span class="tag">SLA adherence, first response and endpoint load for an MSP</span>
+        <span class="metrics"><span>Open Tickets</span><span>SLA Adherence</span><span>First Response (median)</span><span>Avg Resolution</span><span>Recurring Revenue</span><span>Endpoints per Engineer</span></span>
+        <span class="footrow">
+          <span class="rows">14,356 rows &middot; Single column</span>
+          <span class="val">Rs 22M<small>Recurring Revenue</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/14_Logistics-Freight.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/14_Logistics-Freight.png" alt="Logistics &amp; Freight dashboard preview" loading="lazy">
+        <span class="num">14</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#0f766e,#0f766ebb)">🚚</span>
+          <h3>Logistics &amp; Freight</h3>
+        </span>
+        <span class="tag">On-time performance, lane profitability and receivables</span>
+        <span class="metrics"><span>Shipments (30d)</span><span>On-Time Delivery</span><span>Revenue (30d)</span><span>Cost per Shipment</span><span>Receivables</span><span>Exceptions</span></span>
+        <span class="footrow">
+          <span class="rows">2,470 rows &middot; Scorecard</span>
+          <span class="val">Rs 17.6M<small>Revenue (30d)</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/27_Courier-Last-Mile-Delivery.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/27_Courier-Last-Mile-Delivery.png" alt="Courier · Last-Mile Delivery dashboard preview" loading="lazy">
+        <span class="num">27</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#ea580c,#ea580cbb)">📦</span>
+          <h3>Courier · Last-Mile Delivery</h3>
+        </span>
+        <span class="tag">On-time delivery, COD cash and cost per shipment</span>
+        <span class="metrics"><span>Shipments · MTD</span><span>On-time Delivery</span><span>Failed Attempts</span><span>COD in Float</span><span>Cost per Shipment</span><span>Open Complaints</span></span>
+        <span class="footrow">
+          <span class="rows">12,448 rows &middot; Single column</span>
+          <span class="val">Rs 472K<small>COD in Float</small></span>
+        </span>
+      </span>
+    </a>
+    <a class="card" href="../demos/15_Law-Firm.html" target="_blank" rel="noopener">
+      <span class="thumb">
+        <img src="../screenshots/15_Law-Firm.png" alt="Law Firm dashboard preview" loading="lazy">
+        <span class="num">15</span>
+        <span class="open">Open live demo &rarr;</span>
+      </span>
+      <span class="body">
+        <span class="head">
+          <span class="mark" style="background:linear-gradient(140deg,#334155,#334155bb)">⚖️</span>
+          <h3>Law Firm</h3>
+        </span>
+        <span class="tag">Utilisation, realisation and lockup for a law practice</span>
+        <span class="metrics"><span>Billable Hours (30d)</span><span>Utilisation</span><span>Realisation Rate</span><span>Collection Rate</span><span>WIP (unbilled)</span><span>Receivables</span></span>
+        <span class="footrow">
+          <span class="rows">2,971 rows &middot; Ledger</span>
+          <span class="val">Rs 11.6M<small>WIP (unbilled)</small></span>
+        </span>
+      </span>
+    </a>
+    </div>
+  </section>
+
+  <div class="howto">
+    <h2>How this is deployed</h2>
+    <div class="cols">
+      <div>
+        <h3>1 &middot; Host the demos</h3>
+        <p>This folder is a static site. Push it to GitHub, then connect the repo to Netlify
+        (or Cloudflare Pages) &mdash; build command empty, publish directory <code>.</code>.
+        Every card opens its dashboard in a new tab.</p>
+      </div>
+      <div>
+        <h3>2 &middot; Install a real client</h3>
+        <p>Copy <code>Code.gs</code>, <code>SeedData.gs</code> and <code>Index.html</code> into a
+        Google Sheet's Apps Script editor, run the seeder once, then deploy as a web app.</p>
+      </div>
+      <div>
+        <h3>3 &middot; Swap the data</h3>
+        <p>Headings, tab names and the currency all live in <code>SETTINGS</code>. Point it at the
+        client's own tabs and the same dashboard starts reporting their numbers.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Business Dashboard Suite &middot; 30 industries &middot; built with Google Apps Script</span>
+    <span>Sample data is generated, not real client data.</span>
+  </footer>
+</div>
+</body>
+</html>

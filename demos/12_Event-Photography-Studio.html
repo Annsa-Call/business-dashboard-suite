@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Business Dashboard</title>
+
+<!--
+  ================================================================================================
+   BUSINESS DASHBOARD SUITE · Index.html
+  ================================================================================================
+   One UI, fifteen industries. It renders whatever Code.gs sends it:
+
+     meta    → name, tagline, pitch, accent colour, company, currency
+     kpis[]  → 6 cards (money / number / percent / days / hours, with sparkline, progress,
+                split bar, mini breakdown or a short list)
+     charts[]→ line | bars | donut | hbars
+     table   → recent records with typed columns
+
+   So "which metric matters for a dentist vs a freight company" is decided in Code.gs, in plain
+   JavaScript — this file stays generic. Nothing loads from the network: no CDN, no fonts, no
+   libraries. Charts are hand-drawn SVG.
+
+   EDIT POINTS
+     · colours / radius / spacing  → CSS variables in :root and [data-theme="dark"]
+     · the chart drawings          → lineChart(), barsChart(), donutChart(), hbarsChart()
+     · number & date formatting    → fmtMoney(), fmtNumber(), fmtDate()
+     · how a KPI is rendered       → renderKpis() / kpiCard()
+
+   DATA LOADING
+     · Inside Apps Script: google.script.run.getDashboardData(slug)
+     · As a standalone file: an embedded DEMO_PAYLOAD (that's how the portfolio demos work)
+  ================================================================================================
+-->
+
+<style>
+/* ============================================================================================
+   1 · DESIGN TOKENS
+   ============================================================================================ */
+:root{
+  --bg:#f4f6fb;
+  --glow-1:rgba(79,70,229,.10);
+  --glow-2:rgba(14,165,233,.09);
+  --surface:#ffffff;
+  --surface-2:#fafbff;
+  --surface-3:#f0f3fa;
+  --ink:#0f172a;
+  --ink-2:#334155;
+  --muted:#64748b;
+  --faint:#94a3b8;
+  --line:#e6eaf2;
+  --line-2:#dce2ee;
+
+  --brand:#4f46e5;
+  --brand-2:#7c3aed;
+  --brand-soft:#eef0ff;
+  --ok:#0f9d76;
+  --ok-soft:#e6f7f1;
+  --warn:#c2760a;
+  --warn-soft:#fdf3e3;
+  --danger:#dc2750;
+  --danger-soft:#fdeaf0;
+  --info:#0369a1;
+  --info-soft:#e6f4fd;
+  --neutral-soft:#eef1f7;
+
+  --radius:18px;
+  --radius-sm:12px;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.05),0 1px 3px rgba(15,23,42,.04);
+  --shadow:0 12px 32px -16px rgba(15,23,42,.28),0 2px 8px rgba(15,23,42,.05);
+  --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#070b16;
+  --glow-1:rgba(99,102,241,.22);
+  --glow-2:rgba(14,165,233,.14);
+  --surface:#0f1626;
+  --surface-2:#121a2c;
+  --surface-3:#182134;
+  --ink:#e9eefb;
+  --ink-2:#c3cce0;
+  --muted:#8e9bb5;
+  --faint:#6b7894;
+  --line:#1e2942;
+  --line-2:#26334f;
+  --brand:#8b8cf9;
+  --brand-2:#a78bfa;
+  --brand-soft:rgba(139,140,249,.14);
+  --ok:#34d399;
+  --ok-soft:rgba(52,211,153,.14);
+  --warn:#fbbf24;
+  --warn-soft:rgba(251,191,36,.14);
+  --danger:#fb7185;
+  --danger-soft:rgba(251,113,133,.14);
+  --info:#38bdf8;
+  --info-soft:rgba(56,189,248,.14);
+  --neutral-soft:rgba(148,163,184,.14);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow:0 16px 40px -22px rgba(0,0,0,.9),0 2px 10px rgba(0,0,0,.4);
+}
+
+/* ============================================================================================
+   2 · BASE
+   ============================================================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(900px 520px at 8% -8%, var(--glow-1), transparent 70%),
+    radial-gradient(820px 480px at 96% 0%, var(--glow-2), transparent 68%);
+}
+h1,h2,h3,h4,p{margin:0}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+::selection{background:var(--brand);color:#fff}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+code{font-size:.92em;background:var(--surface-3);padding:1px 5px;border-radius:5px}
+
+/* ============================================================================================
+   3 · LAYOUT
+   ============================================================================================ */
+.app{max-width:1480px;margin:0 auto;padding:20px 24px 44px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;align-items:center;gap:10px}
+
+.topbar{
+  position:sticky;top:0;z-index:40;
+  margin:-20px -24px 16px;padding:13px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  background:color-mix(in srgb, var(--bg) 84%, transparent);
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-mark{
+  width:42px;height:42px;flex:0 0 42px;border-radius:13px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(140deg, var(--accent,var(--brand)), var(--brand-2));
+  box-shadow:0 8px 20px -8px color-mix(in srgb, var(--accent,var(--brand)) 70%, transparent);
+}
+.brand-mark svg{width:21px;height:21px}
+.brand-text{min-width:0}
+.brand-text h1{font-size:15.5px;font-weight:680;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-text p{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.select-wrap{position:relative;display:inline-flex;align-items:center}
+.select-wrap svg{position:absolute;right:9px;width:13px;height:13px;color:var(--muted);pointer-events:none}
+select.industry{
+  appearance:none;-webkit-appearance:none;
+  height:34px;padding:0 28px 0 12px;border-radius:10px;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink-2);
+  font-size:12.5px;font-weight:560;font-family:inherit;cursor:pointer;max-width:230px;
+  box-shadow:var(--shadow-sm);
+}
+select.industry:hover{border-color:var(--line-2)}
+.pill{
+  display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line);font-size:12px;color:var(--muted);
+  font-weight:520;box-shadow:var(--shadow-sm);white-space:nowrap;
+}
+.dot-live{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+.dot-live.pulse{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+.icon-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;height:34px;padding:0 12px;
+  border-radius:10px;background:var(--surface);border:1px solid var(--line);color:var(--ink-2);
+  font-size:12.5px;font-weight:560;box-shadow:var(--shadow-sm);
+  transition:transform .16s ease,border-color .16s ease,background .16s ease;
+}
+.icon-btn:hover{border-color:var(--line-2);background:var(--surface-2);transform:translateY(-1px)}
+.icon-btn:active{transform:translateY(0)}
+.icon-btn svg{width:15px;height:15px}
+.icon-btn.primary{
+  background:linear-gradient(140deg,var(--accent,var(--brand)),var(--brand-2));
+  color:#fff;border-color:transparent;
+  box-shadow:0 10px 24px -12px color-mix(in srgb, var(--accent,var(--brand)) 90%, transparent);
+}
+.icon-btn.primary:hover{filter:brightness(1.06)}
+.icon-btn .spin{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* pitch / about strip */
+.pitch{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:13px 16px;border-radius:var(--radius-sm);
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-sm);
+  font-size:12.5px;color:var(--ink-2);line-height:1.55;
+}
+.pitch .pitch-icon{
+  flex:0 0 26px;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  background:var(--brand-soft);color:var(--brand);
+}
+.pitch .pitch-icon svg{width:14px;height:14px}
+.pitch b{color:var(--ink)}
+.pitch .dismiss{margin-left:auto;background:none;border:0;color:var(--faint);padding:2px;line-height:0;border-radius:6px}
+.pitch .dismiss:hover{color:var(--ink)}
+
+.grid-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid-charts{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:14px;align-items:stretch}
+
+/* ============================================================================================
+   4b · LAYOUT PRESETS  (one arrangement per industry — see `layout` in Code.gs)
+   --------------------------------------------------------------------------------------------
+   #stage is a single grid. Each preset rewrites its columns and named areas, so the same three
+   sections (KPIs · charts · records) can be composed eight different ways:
+
+     grid       the classic 3-up dashboard
+     hero       one oversized headline metric, the rest orbiting it
+     ledger     numbers on the left, the transaction ledger on the right
+     gauge      six small instrument tiles in a row, like a machine HMI
+     calendar   daily charts stacked in a wide column, KPI rail on the right
+     scorecard  table pinned to the right as a tall scorecard
+     board      the records table leads, KPIs read along the bottom
+     timeline   a single vertical reading column, top to bottom
+   ============================================================================================ */
+#stage{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+#stage > #kpiGrid{grid-column:1/-1;grid-template-columns:repeat(var(--kpi-cols,3),minmax(0,1fr))}
+#stage > #chartGrid{grid-column:1/-1;grid-template-columns:var(--chart-cols,1.3fr 1fr 1fr)}
+#stage > .table-card{grid-column:1/-1}
+
+/* hero — the first KPI becomes a 2×2 panel */
+#stage[data-layout="hero"] #kpiGrid{grid-template-columns:repeat(var(--kpi-cols,4),minmax(0,1fr))}
+#stage[data-layout="hero"] #kpiGrid > .kpi:first-child{
+  grid-column:span 2;grid-row:span 2;justify-content:space-between;padding:22px}
+#stage[data-layout="hero"] #kpiGrid > .kpi:first-child .kpi-value{font-size:54px;line-height:1;letter-spacing:-.035em}
+#stage[data-layout="hero"] #kpiGrid > .kpi:first-child .kpi-label{font-size:12.5px}
+#stage[data-layout="hero"] #kpiGrid > .kpi:first-child .kpi-caption{font-size:12.5px}
+#stage[data-layout="hero"] #kpiGrid > .kpi:first-child .kpi-icon{width:46px;height:46px;flex:0 0 46px;border-radius:13px}
+#stage[data-layout="hero"] #kpiGrid > .kpi:first-child .kpi-icon svg{width:22px;height:22px}
+#stage[data-layout="hero"] #kpiGrid > .kpi:first-child .progress{height:9px}
+#stage[data-layout="hero"] #kpiGrid > .kpi:first-child .spark{height:74px}
+#stage[data-layout="hero"] #chartGrid{grid-template-columns:1fr 1fr}
+#stage[data-layout="hero"] #chartGrid > .chart-card:nth-child(3){grid-column:1/-1}
+
+/* ledger — KPI stack left, ledger right, charts full width underneath */
+#stage[data-layout="ledger"]{grid-template-columns:minmax(0,1fr) minmax(0,540px);
+  grid-template-areas:"kpi tbl" "chart chart"}
+#stage[data-layout="ledger"] #kpiGrid{grid-area:kpi;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start}
+#stage[data-layout="ledger"] .table-card{grid-area:tbl;align-self:start}
+#stage[data-layout="ledger"] #chartGrid{grid-area:chart}
+
+/* gauge — six compact instrument tiles, charts below */
+#stage[data-layout="gauge"] #kpiGrid{grid-template-columns:repeat(var(--kpi-cols,6),minmax(0,1fr));gap:10px}
+#stage[data-layout="gauge"] #kpiGrid .kpi{min-height:122px;padding:13px;gap:6px}
+#stage[data-layout="gauge"] #kpiGrid .kpi-value{font-size:23px}
+#stage[data-layout="gauge"] #kpiGrid .kpi-caption{font-size:10.5px}
+#stage[data-layout="gauge"] #kpiGrid .kpi-icon{width:28px;height:28px;flex:0 0 28px;border-radius:8px}
+#stage[data-layout="gauge"] #chartGrid{grid-template-columns:1.4fr 1fr 1fr}
+
+/* calendar — wide stacked daily charts, narrow KPI rail */
+#stage[data-layout="calendar"]{grid-template-columns:minmax(0,1.6fr) minmax(0,.8fr);
+  grid-template-areas:"chart kpi" "tbl tbl"}
+#stage[data-layout="calendar"] #chartGrid{grid-area:chart;grid-template-columns:minmax(0,1fr)}
+#stage[data-layout="calendar"] #kpiGrid{grid-area:kpi;grid-template-columns:minmax(0,1fr);align-content:start}
+#stage[data-layout="calendar"] .table-card{grid-area:tbl}
+
+/* scorecard — table pinned right, tall; numbers and charts on the left */
+#stage[data-layout="scorecard"]{grid-template-columns:minmax(0,1fr) minmax(0,560px);
+  grid-template-areas:"kpi tbl" "chart tbl"}
+#stage[data-layout="scorecard"] #kpiGrid{grid-area:kpi}
+#stage[data-layout="scorecard"] #chartGrid{grid-area:chart;grid-template-columns:minmax(0,1fr)}
+#stage[data-layout="scorecard"] .table-card{grid-area:tbl;align-self:start}
+
+/* ledger + scorecard put the table in a side column. The column is wide enough for six or seven
+   columns at a smaller type size; cells ellipsize rather than break words or split numbers. */
+#stage[data-layout="ledger"] .table-card table,
+#stage[data-layout="scorecard"] .table-card table{min-width:0}
+#stage[data-layout="ledger"] .table-card thead th,
+#stage[data-layout="scorecard"] .table-card thead th{padding:8px 9px;font-size:9px;letter-spacing:.03em}
+#stage[data-layout="ledger"] .table-card tbody td,
+#stage[data-layout="scorecard"] .table-card tbody td{padding:9px;font-size:11px;max-width:128px}
+#stage[data-layout="ledger"] .table-card .badge,
+#stage[data-layout="scorecard"] .table-card .badge{font-size:9.5px;padding:2px 6px}
+#stage[data-layout="ledger"] .table-foot,
+#stage[data-layout="scorecard"] .table-foot{padding:9px 10px;font-size:10px}
+
+/* board — the records table leads the page */
+#stage[data-layout="board"]{grid-template-areas:"tbl" "chart" "kpi"}
+#stage[data-layout="board"] .table-card{grid-area:tbl}
+#stage[data-layout="board"] #chartGrid{grid-area:chart}
+#stage[data-layout="board"] #kpiGrid{grid-area:kpi;grid-template-columns:repeat(var(--kpi-cols,6),minmax(0,1fr));gap:10px}
+#stage[data-layout="board"] #kpiGrid .kpi{min-height:104px;padding:12px;gap:5px}
+#stage[data-layout="board"] #kpiGrid .kpi-value{font-size:21px}
+#stage[data-layout="board"] #kpiGrid .kpi-caption{font-size:10.5px}
+
+/* timeline — one column, read straight down */
+#stage[data-layout="timeline"] #kpiGrid{grid-template-columns:repeat(var(--kpi-cols,6),minmax(0,1fr));gap:10px}
+#stage[data-layout="timeline"] #chartGrid{grid-template-columns:minmax(0,1fr)}
+#stage[data-layout="timeline"] .chart-card{min-height:0}
+
+/* ============================================================================================
+   4 · CARDS
+   ============================================================================================ */
+.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);overflow:hidden}
+
+.kpi{padding:16px;display:flex;flex-direction:column;gap:9px;min-height:150px;
+  transition:transform .22s cubic-bezier(.2,.7,.3,1),box-shadow .22s ease,border-color .22s ease}
+.kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--line-2)}
+.kpi::after{
+  content:"";position:absolute;right:-42px;top:-42px;width:132px;height:132px;border-radius:50%;
+  background:radial-gradient(circle,var(--tone-soft,var(--brand-soft)),transparent 70%);
+  opacity:.9;pointer-events:none;
+}
+.kpi.alert{border-left:3px solid var(--danger)}
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.kpi-label{font-size:11px;font-weight:640;letter-spacing:.045em;text-transform:uppercase;color:var(--muted)}
+.kpi-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 34px;
+  background:var(--tone-soft);color:var(--tone)}
+.kpi-icon svg{width:17px;height:17px}
+.kpi-value{font-size:28px;font-weight:710;letter-spacing:-.03em;line-height:1.08}
+.kpi-value small{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px}
+.kpi-caption{font-size:11.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+.kpi-caption .sep{width:3px;height:3px;border-radius:50%;background:var(--faint);flex:0 0 3px}
+.kpi-caption2{font-size:11px;color:var(--faint)}
+.kpi-foot{margin-top:auto}
+
+.kpi[data-tone="brand"]{--tone:var(--brand);--tone-soft:var(--brand-soft)}
+.kpi[data-tone="ok"]{--tone:var(--ok);--tone-soft:var(--ok-soft)}
+.kpi[data-tone="warn"]{--tone:var(--warn);--tone-soft:var(--warn-soft)}
+.kpi[data-tone="danger"]{--tone:var(--danger);--tone-soft:var(--danger-soft)}
+.kpi[data-tone="info"]{--tone:var(--info);--tone-soft:var(--info-soft)}
+
+.spark{width:100%;height:34px;display:block}
+.progress{height:6px;border-radius:999px;background:var(--surface-3);overflow:hidden}
+.progress > span{display:block;height:100%;border-radius:999px;width:0;
+  background:linear-gradient(90deg,var(--tone,var(--brand)),var(--brand-2));
+  transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.progress-note{font-size:10.5px;color:var(--faint);margin-top:5px}
+
+.split-bar{display:flex;gap:3px;height:6px}
+.split-bar i{display:block;height:100%;border-radius:999px;min-width:3px}
+.split-legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:7px;font-size:10.5px;color:var(--faint)}
+.split-legend span{display:flex;align-items:center;gap:5px}
+.split-legend i{width:6px;height:6px;border-radius:50%;display:inline-block;flex:0 0 6px}
+.split-legend b{color:var(--ink-2);font-weight:640;font-variant-numeric:tabular-nums}
+
+.mini-bars{display:flex;gap:4px}
+.mini-bars i{height:6px;border-radius:999px;display:block}
+.mini-legend{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:7px;font-size:10.5px;color:var(--faint)}
+.mini-legend span{display:flex;align-items:center;gap:4px}
+.mini-legend i{width:6px;height:6px;border-radius:50%;display:inline-block}
+
+.item-list{display:flex;flex-direction:column;gap:4px}
+.item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-2);min-width:0}
+.item .when{flex:0 0 auto;font-weight:650;color:var(--tone);background:var(--tone-soft);border-radius:6px;
+  padding:1px 6px;font-size:10px}
+.item .who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* chart cards */
+.chart-card{padding:16px;display:flex;flex-direction:column;gap:12px}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.card-head h3{font-size:13.5px;font-weight:660;letter-spacing:-.01em}
+.card-head p{font-size:11.5px;color:var(--muted);margin-top:1px}
+.chip{font-size:10.5px;font-weight:640;padding:4px 9px;border-radius:999px;background:var(--surface-3);
+  color:var(--ink-2);white-space:nowrap}
+.chip.brand{background:var(--brand-soft);color:var(--brand)}
+
+/* bars */
+.bars{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px;align-items:end;height:180px;margin-top:4px}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;min-width:0}
+.bar-val{font-size:10px;font-weight:640;color:var(--muted);white-space:nowrap}
+.bar-track{width:100%;flex:1;display:flex;align-items:flex-end;justify-content:center;min-height:0;
+  border-radius:8px;background:linear-gradient(to top,var(--surface-3),transparent)}
+.bar{width:100%;max-width:52px;min-height:3px;border-radius:8px 8px 5px 5px;
+  background:linear-gradient(180deg,var(--brand-2),var(--accent,var(--brand)));
+  transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
+.bar:hover{filter:brightness(1.12)}
+.bar.is-zero{background:var(--surface-3);animation:none}
+@keyframes grow{from{transform:scaleY(.02);opacity:.5}to{transform:scaleY(1);opacity:1}}
+.bar-x{font-size:10px;color:var(--faint);font-weight:560;white-space:nowrap}
+
+/* line chart */
+.linechart{width:100%;height:190px;display:block;overflow:visible}
+.linechart .grid{stroke:var(--line);stroke-width:1}
+.linechart .axis{fill:var(--faint);font-size:9.5px;font-family:var(--font)}
+.linechart .area{opacity:.9}
+.linechart .path{fill:none;stroke:var(--accent,var(--brand));stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.linechart .dot{fill:var(--surface);stroke:var(--accent,var(--brand));stroke-width:2}
+.linechart .dot-last{fill:var(--accent,var(--brand));stroke:var(--surface);stroke-width:2.5}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center}
+.donut{position:relative;flex:0 0 auto}
+.donut svg{display:block;transform:rotate(-90deg)}
+.donut circle{transition:stroke-dasharray 1s cubic-bezier(.2,.8,.2,1),stroke-width .2s ease;cursor:pointer}
+.donut circle.seg:hover{stroke-width:22}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;pointer-events:none}
+.donut-center b{font-size:22px;font-weight:720;letter-spacing:-.03em;line-height:1}
+.donut-center span{font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-top:4px}
+.legend{display:flex;flex-direction:column;gap:6px;flex:1 1 130px;min-width:118px}
+.legend-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-2);min-width:0}
+.legend-dot{width:8px;height:8px;border-radius:3px;flex:0 0 8px}
+.legend-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.legend-val{font-weight:650;font-variant-numeric:tabular-nums;color:var(--ink);min-width:22px;text-align:right}
+.legend-pct{color:var(--faint);font-size:10px;width:34px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* horizontal bars */
+.hbars{display:flex;flex-direction:column;gap:12px;margin-top:2px}
+.hbar-row{display:flex;flex-direction:column;gap:5px}
+.hbar-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:11px}
+.hbar-top .lbl{color:var(--ink-2);font-weight:560;display:flex;align-items:center;gap:6px;min-width:0}
+.hbar-top .lbl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar-top .val{font-weight:680;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hbar-track{height:8px;border-radius:999px;background:var(--surface-3);overflow:hidden}
+.hbar-fill{height:100%;border-radius:999px;width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+
+/* ============================================================================================
+   5 · TABLE
+   ============================================================================================ */
+.table-card{padding:0}
+.table-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  padding:15px 16px 13px;border-bottom:1px solid var(--line)}
+.table-head h3{font-size:13.5px;font-weight:660;letter-spacing:-.01em}
+.table-head p{font-size:11.5px;color:var(--muted);margin-top:1px}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:680px}
+thead th{position:sticky;top:0;z-index:2;text-align:left;font-size:10px;font-weight:680;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--faint);background:var(--surface-2);padding:10px 16px;
+  border-bottom:1px solid var(--line);white-space:nowrap}
+thead th.right{text-align:right}
+tbody td{padding:11px 16px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-2);
+  vertical-align:middle;white-space:nowrap;max-width:250px;overflow:hidden;text-overflow:ellipsis}
+tbody tr{transition:background .14s ease}
+tbody tr:hover td{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:0}
+td.primary{color:var(--ink);font-weight:600}
+td.money{font-weight:640;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+td.dim{color:var(--faint)}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:3px 9px;
+  border-radius:999px;background:var(--neutral-soft);color:var(--muted);white-space:nowrap}
+.badge::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.85}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.danger{background:var(--danger-soft);color:var(--danger)}
+.badge.info{background:var(--info-soft);color:var(--info)}
+.badge.brand{background:var(--brand-soft);color:var(--brand)}
+.table-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:11px 16px;border-top:1px solid var(--line);background:var(--surface-2);
+  font-size:11px;color:var(--muted)}
+
+/* ============================================================================================
+   6 · NOTICES / EMPTY / SKELETON / MODAL
+   ============================================================================================ */
+.notice{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:var(--radius-sm);
+  background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 26%, transparent);
+  color:var(--warn);font-size:12px;font-weight:520}
+.notice svg{width:16px;height:16px;flex:0 0 16px;margin-top:1px}
+.notice ul{margin:4px 0 0;padding-left:16px;color:var(--ink-2);font-weight:450}
+.notice li{margin:2px 0}
+
+.empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:34px 16px;text-align:center;
+  color:var(--muted);font-size:12.5px}
+.empty svg{width:32px;height:32px;color:var(--faint)}
+
+.sk{position:relative;overflow:hidden;background:var(--surface-3);border-radius:8px}
+.sk::after{content:"";position:absolute;inset:0;transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--surface) 70%,transparent),transparent);
+  animation:shimmer 1.4s infinite}
+@keyframes shimmer{to{transform:translateX(100%)}}
+.sk-card{padding:16px;display:flex;flex-direction:column;gap:12px;min-height:150px}
+.sk-line{height:11px;border-radius:6px}
+.sk-big{height:26px;width:60%;border-radius:8px}
+
+.modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:20px;
+  background:rgba(9,13,24,.55);backdrop-filter:blur(3px)}
+.modal.open{display:flex}
+.modal-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;max-width:620px;width:100%;
+  box-shadow:0 40px 80px -30px rgba(0,0,0,.5);padding:22px;max-height:86vh;overflow:auto}
+.modal-card h2{font-size:16px;font-weight:680;letter-spacing:-.02em}
+.modal-card .close{float:right;background:var(--surface-3);border:0;border-radius:8px;width:28px;height:28px;
+  line-height:1;color:var(--muted);font-size:16px}
+.modal-card p{font-size:12.5px;color:var(--ink-2);margin-top:10px;line-height:1.6}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.modal-kv{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.modal-kv span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint)}
+.modal-kv b{font-size:12.5px;color:var(--ink)}
+
+.foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:2px 2px 0;font-size:11px;color:var(--faint)}
+
+/* ============================================================================================
+   7 · RESPONSIVE
+   ============================================================================================ */
+@media (max-width:1180px){
+  .grid-charts{grid-template-columns:1fr 1fr}
+  /* every preset collapses to a single reading column on tablets */
+  #stage[data-layout]{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:none!important}
+  #stage[data-layout] > *{grid-area:auto!important}
+  #stage[data-layout] #kpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #stage[data-layout] #kpiGrid > .kpi:first-child{grid-column:auto!important;grid-row:auto!important}
+  #stage[data-layout] #kpiGrid > .kpi:first-child .kpi-value{font-size:28px!important}
+  #stage[data-layout] #chartGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #stage[data-layout] #chartGrid > .chart-card{grid-column:auto!important;grid-row:auto!important}
+  .grid-charts .chart-card:first-child{grid-column:1 / -1}
+}
+@media (max-width:900px){
+  #stage[data-layout] #chartGrid{grid-template-columns:minmax(0,1fr)!important}
+  .grid-kpi{grid-template-columns:repeat(2,1fr)}
+  .app{padding:16px 14px 36px}
+  .topbar{margin:-16px -14px 14px;padding:12px 14px;gap:10px}
+  .brand-text p{display:none}
+  .grid-charts{grid-template-columns:1fr}
+  .grid-charts .chart-card:first-child{grid-column:auto}
+}
+@media (max-width:560px){
+  #stage[data-layout] #kpiGrid{grid-template-columns:minmax(0,1fr)!important}
+  .grid-kpi{grid-template-columns:1fr}
+  .kpi{min-height:auto}
+  .kpi-value{font-size:25px}
+  .top-actions .icon-btn span{display:none}
+  .pill.hide-sm{display:none}
+  select.industry{max-width:160px;font-size:12px}
+  .modal-grid{grid-template-columns:1fr}
+  .bar{max-width:34px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+
+<body>
+<div class="app" id="app">
+
+  <!-- ===================== TOP BAR ===================== -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" id="brandMark" aria-hidden="true"></div>
+      <div class="brand-text">
+        <h1 id="brandTitle">Business Dashboard</h1>
+        <p id="brandSub">Loading…</p>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <div class="select-wrap" id="switcherWrap" style="display:none">
+        <select class="industry" id="industrySelect" aria-label="Choose industry demo"></select>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <span class="pill hide-sm" id="updatedAt"><span class="dot-live pulse"></span>Connecting…</span>
+      <button class="icon-btn" id="aboutBtn" type="button" aria-label="About this dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>
+        </svg><span>About</span>
+      </button>
+      <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+        </svg><span>Theme</span>
+      </button>
+      <button class="icon-btn primary" id="refreshBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/>
+        </svg><span>Refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="stack">
+    <!-- ===================== PITCH STRIP ===================== -->
+    <div class="pitch" id="pitch" style="display:none">
+      <span class="pitch-icon" aria-hidden="true"></span>
+      <div id="pitchText"></div>
+      <button class="dismiss" id="pitchClose" aria-label="Dismiss">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div id="notices"></div>
+
+    <!-- ===================== STAGE (layout presets, see §4b) ===================== -->
+    <div id="stage" data-layout="grid">
+
+    <!-- ===================== KPI CARDS ===================== -->
+    <section class="grid-kpi" id="kpiGrid" aria-label="Key performance indicators">
+      <div class="card sk-card"><div class="sk sk-line" style="width:46%"></div><div class="sk sk-big"></div><div class="sk sk-line" style="width:70%"></div></div>
+      <div class="card sk-card"><div class="sk sk-line" style="width:46%"></div><div class="sk sk-big"></div><div class="sk sk-line" style="width:70%"></div></div>
+      <div class="card sk-card"><div class="sk sk-line" style="width:46%"></div><div class="sk sk-big"></div><div class="sk sk-line" style="width:70%"></div></div>
+      <div class="card sk-card"><div class="sk sk-line" style="width:46%"></div><div class="sk sk-big"></div><div class="sk sk-line" style="width:70%"></div></div>
+      <div class="card sk-card"><div class="sk sk-line" style="width:46%"></div><div class="sk sk-big"></div><div class="sk sk-line" style="width:70%"></div></div>
+      <div class="card sk-card"><div class="sk sk-line" style="width:46%"></div><div class="sk sk-big"></div><div class="sk sk-line" style="width:70%"></div></div>
+    </section>
+
+    <!-- ===================== CHARTS ===================== -->
+    <section class="grid-charts" id="chartGrid" aria-label="Charts">
+      <div class="card chart-card"><div class="sk sk-line" style="width:34%"></div><div class="sk" style="height:170px"></div></div>
+      <div class="card chart-card"><div class="sk sk-line" style="width:34%"></div><div class="sk" style="height:170px"></div></div>
+      <div class="card chart-card"><div class="sk sk-line" style="width:34%"></div><div class="sk" style="height:170px"></div></div>
+    </section>
+
+    <!-- ===================== RECENT RECORDS ===================== -->
+    <section class="card table-card" aria-label="Recent records">
+      <div class="table-head">
+        <div>
+          <h3 id="tableTitle">Recent records</h3>
+          <p id="tableSub">Newest entries</p>
+        </div>
+        <span class="chip" id="tableChip"></span>
+      </div>
+      <div class="table-scroll">
+        <table id="dataTable">
+          <thead><tr id="tableHead"></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="table-foot">
+        <span id="tableFootInfo">Loading…</span>
+        <span id="tableFootSource">Google Sheets · Apps Script</span>
+      </div>
+    </section>
+
+    </div><!-- /#stage -->
+
+    <footer class="foot">
+      <span id="footLeft">Business Dashboard Suite</span>
+      <span id="footRight">Built with Google Apps Script</span>
+    </footer>
+  </main>
+</div>
+
+<!-- ===================== ABOUT MODAL ===================== -->
+<div class="modal" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div class="modal-card">
+    <button class="close" id="aboutClose" aria-label="Close">✕</button>
+    <h2 id="aboutTitle">About this dashboard</h2>
+    <p id="aboutPitch"></p>
+    <div class="modal-grid">
+      <div class="modal-kv"><span>Industry</span><b id="aboutIndustry">—</b></div>
+      <div class="modal-kv"><span>Data source</span><b>Google Sheets</b></div>
+      <div class="modal-kv"><span>Rows loaded</span><b id="aboutRows">—</b></div>
+      <div class="modal-kv"><span>Last refresh</span><b id="aboutTime">—</b></div>
+      <div class="modal-kv"><span>Built with</span><b>Apps Script + HTML</b></div>
+      <div class="modal-kv"><span>Update cost</span><b>Live, no rebuild</b></div>
+    </div>
+    <p style="color:var(--faint);font-size:11.5px">
+      Everything on this page is calculated from the spreadsheet tabs in real time. To change a metric,
+      edit the industry definition in <code>Code.gs</code> — the layout follows automatically.
+    </p>
+  </div>
+</div>
+
+<script>
+/* ================================================================================================
+   0 · BOOTSTRAP
+   ------------------------------------------------------------------------------------------------
+   INITIAL_SLUG is filled in by Apps Script's template engine (or by the demo build for the
+   standalone portfolio files). DEMO_PAYLOAD only exists in the standalone files.
+   ============================================================================================== */
+var INITIAL_SLUG = "photography";
+var DEMO_PAYLOAD = window.DEMO_PAYLOAD || null;
+var DEMO_LINKS = window.DEMO_LINKS || null;
+
+var STATE = {
+  data: null,
+  symbol: 'Rs',
+  locale: 'en-PK',
+  slug: INITIAL_SLUG,
+  loading: false,
+};
+
+var $ = function (id) { return document.getElementById(id); };
+var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+
+/* ================================================================================================
+   1 · FORMATTERS
+   ============================================================================================== */
+var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function compact(n) {
+  var abs = Math.abs(n || 0);
+  if (abs >= 1e9) return (n / 1e9).toFixed(2).replace(/\.?0+$/, '') + 'B';
+  if (abs >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (abs >= 1e4) return Math.round(n / 1e3) + 'K';
+  if (abs >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+  return String(Math.round(n || 0));
+}
+
+function fmtMoney(n, opts) {
+  n = Number(n) || 0;
+  opts = opts || {};
+  if (opts.compact) return STATE.symbol + ' ' + compact(n);
+  var full;
+  try { full = new Intl.NumberFormat(STATE.locale, { maximumFractionDigits: 0 }).format(n); }
+  catch (e) { full = Math.round(n).toLocaleString(); }
+  return STATE.symbol + ' ' + full;
+}
+
+function fmtNumber(n, dp) {
+  n = Number(n) || 0;
+  try { return new Intl.NumberFormat(STATE.locale, { minimumFractionDigits: dp || 0, maximumFractionDigits: dp === undefined ? 1 : dp }).format(n); }
+  catch (e) { return String(n); }
+}
+
+/** KPI value → display string. Percent KPIs arrive as fractions (0.94). */
+function fmtKpiValue(kpi) {
+  var v = Number(kpi.value) || 0;
+  // A free-form unit (Rs/L, kg, pcs, kWh, min, kW …) prints small after the number.
+  if (kpi.unit) {
+    var dp = typeof kpi.dp === 'number' ? kpi.dp : (v % 1 ? 1 : 0);
+    return fmtNumber(v, dp) + '<small>' + escapeHtml(kpi.unit) + '</small>';
+  }
+  switch (kpi.format) {
+    case 'money':
+      return Math.abs(v) >= 1000000 ? fmtMoney(v, { compact: true }) : fmtMoney(v);
+    case 'percent':
+      return (v * 100).toFixed(v * 100 < 10 ? 1 : 0) + '%';
+    case 'days':
+      return Math.round(v) + '<small>days</small>';
+    case 'hours':
+      return fmtNumber(v, v < 100 ? 0 : 0) + '<small>h</small>';
+    default:
+      return fmtNumber(v);
+  }
+}
+
+/** Chart value labels. `percent` charts already carry 0–100 values. */
+function fmtChartValue(v, format) {
+  if (format === 'percent') return (Math.round(v * 10) / 10) + '%';
+  if (format === 'number') return fmtNumber(v, 0);
+  return fmtMoney(v, { compact: true });
+}
+
+function fmtAxis(v, format) {
+  if (format === 'percent') return Math.round(v) + '%';
+  if (format === 'number') return compact(v);
+  return compact(v);
+}
+
+/** ISO or Date → "20 Oct 2026" (parsed by hand to avoid timezone drift). */
+function fmtDate(value) {
+  if (!value) return '';
+  var d;
+  var m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  else d = new Date(value);
+  if (isNaN(d.getTime())) return '';
+  return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+function dayDiff(value) {
+  if (!value) return null;
+  var m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  var then = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  var now = new Date(); now.setHours(0, 0, 0, 0);
+  return Math.round((then - now) / 86400000);
+}
+
+
+/* ================================================================================================
+   2 · ICONS  (inline SVG — nothing loads from the network)
+   ============================================================================================== */
+var I = {
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>',
+  briefcase:'<rect x="2.5" y="7.5" width="19" height="12.5" rx="2.5"/><path d="M8.5 7.5V5.5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v2"/><path d="M2.5 12.5h19"/>',
+  wallet:'<path d="M20 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6"/><path d="M17 12.5h.01"/>',
+  check:'<path d="M9 11.5l2 2 4-4.5"/><rect x="3" y="3" width="18" height="18" rx="4"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M8 3v4M16 3v4M3 10.5h18"/>',
+  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>',
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5"/>',
+  book:'<path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M4 17.5h16"/>',
+  cart:'<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.4h11L21 7H6"/>',
+  coffee:'<path d="M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 9h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M4 22h13"/>',
+  scissors:'<circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M8.1 7.6 20 18M20 6 8.1 16.4"/>',
+  activity:'<path d="M3 12h4l2.5-7 4 14 2.5-7H21"/>',
+  heart:'<path d="M12 20s-7-4.6-7-9.6A4.4 4.4 0 0 1 12 7a4.4 4.4 0 0 1 7 3.4c0 5-7 9.6-7 9.6z"/>',
+  plane:'<path d="M10.5 13.5 3 11V9l7.5 1.5L14 3h2l-2 8 5 1.5V15l-5-1-2.5 7h-2z"/>',
+  tool:'<path d="M14.5 3.5a5 5 0 0 0 6 6L9 21a3 3 0 0 1-4-4z"/>',
+  camera:'<path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.8l1.2-2h6.9l1.2 2h1.9A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/>',
+  cloud:'<path d="M7 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 18 9.5a4.2 4.2 0 0 1-.5 8.5z"/>',
+  truck:'<rect x="2" y="8" width="12" height="9" rx="2"/><path d="M14 11h4l3 3v3h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/>',
+  scale:'<path d="M12 3v18M7 21h10M4 8h16"/><path d="M7 8 4 15h6zM17 8l-3 7h6z"/>',
+  alert:'<path d="M12 3.5 21 20H3z"/><path d="M12 9.5v4M12 17h.01"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  bell:'<path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  empty:'<rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="M3 10h18M8 15h5"/>',
+  /* --- layout-2 additions (hotel, factory, pharmacy, poultry, fuel, MSP, workshop, press, apparel,
+         bakery, courier, studio, vet, solar) --- */
+  bed:'<path d="M3 18V8M3 12h18v6M21 18v-4a3 3 0 0 0-3-3h-7V8"/><circle cx="7" cy="10" r="1.6"/>',
+  factory:'<path d="M3 21V10l5 3V10l5 3V10l5 3v8z"/><path d="M6 21v-3M11 21v-3M16 21v-3"/>',
+  pill:'<rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-40 12 12)"/><path d="M9 15l6-6"/>',
+  bird:'<path d="M16 6a2.6 2.6 0 1 1 2.6 2.6"/><path d="M3 12c4-4 8-4 12 0v2a4 4 0 0 1-4 4H7"/><path d="M11 18l-1 3M14 18l1 3"/>',
+  box:'<path d="M3 8.5 12 4l9 4.5v7L12 20l-9-4.5z"/><path d="M3 8.5 12 13l9-4.5M12 13v7"/>',
+  fuel:'<path d="M4 21V5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v16"/><path d="M3 21h11M6 9h5"/><path d="M16 9h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V9l-3-3"/>',
+  server:'<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>',
+  car:'<path d="M5 16h14M4 16v-4l2-5h12l2 5v4"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="16.5" cy="18" r="1.6"/><path d="M6 12h12"/>',
+  printer:'<path d="M7 8V3.5h10V8"/><rect x="3" y="8" width="18" height="8" rx="2"/><path d="M7 13h10v7.5H7z"/>',
+  shirt:'<path d="M9 3 4 5.5 2.5 10l3 1.5V21h13v-9.5l3-1.5L20 5.5 15 3a3 3 0 0 1-6 0z"/>',
+  bread:'<path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 0 8v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 10v3M12 10v3M16 10v3"/>',
+  package:'<path d="M12 3 3 7.5v9L12 21l9-4.5v-9z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/>',
+  ruler:'<path d="m3 16.5 13.5-13.5 4.5 4.5L7.5 21z"/><path d="M8 11.5l2 2M11 8.5l2 2M14 5.5l2 2"/>',
+  paw:'<circle cx="7" cy="8" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="8" r="2"/><path d="M12 11c3 0 5 2.5 5 5a3 3 0 0 1-4.5 2.6L12 18l-.5.6A3 3 0 0 1 7 16c0-2.5 2-5 5-5z"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>',
+  spark:'<path d="M4 17 9 9l4 4 7-8"/>'
+};
+function icon(name, cls) {
+  return '<svg class="' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    (I[name] || I.info) + '</svg>';
+}
+
+
+/* ================================================================================================
+   3 · LOADING
+   ============================================================================================== */
+function boot(slug) {
+  setLoading(true);
+
+  // standalone portfolio demo → use the embedded payload
+  if (DEMO_PAYLOAD && (!slug || slug === DEMO_PAYLOAD.meta.slug)) {
+    setTimeout(function () { onData(DEMO_PAYLOAD); }, 120);
+    return;
+  }
+
+  // inside Apps Script
+  if (window.google && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(onData)
+      .withFailureHandler(onError)
+      .getDashboardData(slug || INITIAL_SLUG);
+    return;
+  }
+
+  onError(new Error('No data source. Open this page through Apps Script, or use one of the demo files.'));
+}
+
+function onData(data) {
+  STATE.data = data;
+  STATE.symbol = (data.meta && data.meta.currencySymbol) || 'Rs';
+  STATE.locale = (data.meta && data.meta.locale) || 'en-PK';
+  STATE.slug = (data.meta && data.meta.slug) || INITIAL_SLUG;
+
+  var meta = data.meta || {};
+
+  // ---- header ----
+  document.documentElement.style.setProperty('--accent', meta.accent || '#4f46e5');
+  $('brandMark').innerHTML = icon(meta.icon || 'spark');
+  $('brandTitle').textContent = meta.company ? (meta.company + ' · ' + meta.name) : meta.name;
+  $('brandSub').textContent = meta.tagline || '';
+  document.title = meta.name + ' · Dashboard';
+
+  var when = new Date(meta.generatedAt || Date.now());
+  $('updatedAt').innerHTML = '<span class="dot-live pulse"></span>Updated ' +
+    when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  applyLayout(meta.layout);
+  renderPitch(meta);
+  renderNotices(data.notices || []);
+  renderKpis(data.kpis || []);
+  renderCharts(data.charts || []);
+  renderTable(data.table);
+  renderSwitcher(data.catalog || [], meta.switcher !== false);
+
+  // ---- footer / about ----
+  $('footLeft').textContent = (meta.name || 'Dashboard') + ' · sample data generated ' + fmtDate(meta.generatedAt);
+  $('footRight').textContent = meta.rows ? fmtNumber(meta.rows, 0) + ' rows · Google Sheets + Apps Script'
+                                         : 'Google Sheets + Apps Script';
+  $('aboutIndustry').textContent = meta.name || '—';
+  $('aboutRows').textContent = meta.rows ? fmtNumber(meta.rows, 0) : '—';
+  $('aboutTime').textContent = when.toLocaleString();
+
+  setLoading(false);
+}
+
+function onError(err) {
+  setLoading(false);
+  var msg = (err && err.message) ? err.message : String(err);
+  $('kpiGrid').innerHTML =
+    '<div class="card" style="grid-column:1/-1;padding:26px">' +
+      '<div class="row" style="color:var(--danger);font-weight:640;margin-bottom:6px">' + icon('alert') + ' Could not load the dashboard</div>' +
+      '<p style="color:var(--muted);font-size:12.5px;max-width:70ch">' + escapeHtml(msg) + '</p>' +
+      '<p style="color:var(--faint);font-size:12px;margin-top:10px">Run 📊 Dashboard → “Seed demo data…” if the tabs do not exist yet, then check “Check sheet setup”.</p>' +
+    '</div>';
+  $('chartGrid').innerHTML = '';
+}
+
+function setLoading(isLoading) {
+  STATE.loading = isLoading;
+  var btn = $('refreshBtn');
+  if (!btn) return;
+  btn.disabled = isLoading;
+  var svg = btn.querySelector('svg');
+  if (svg) svg.classList.toggle('spin', isLoading);
+}
+
+
+/* ================================================================================================
+   4 · PITCH STRIP, NOTICES, SWITCHER
+   ============================================================================================== */
+/**
+ * Applies an industry's layout preset (§4b). `layout` arrives from Code.gs as
+ *   { preset: 'hero'|'ledger'|'gauge'|'calendar'|'scorecard'|'board'|'timeline'|'grid', kpiCols: 6, chartCols: '…' }
+ * Colours stay put; only the composition changes, so 30 industries never look like one template.
+ */
+function applyLayout(layout) {
+  var stage = $('stage');
+  if (!stage) return;
+  layout = layout || {};
+  stage.setAttribute('data-layout', layout.preset || 'grid');
+  if (layout.kpiCols) stage.style.setProperty('--kpi-cols', layout.kpiCols);
+  else stage.style.removeProperty('--kpi-cols');
+  if (layout.chartCols) stage.style.setProperty('--chart-cols', layout.chartCols);
+  else stage.style.removeProperty('--chart-cols');
+}
+
+function renderPitch(meta) {
+  var box = $('pitch');
+  if (!meta.pitch) { box.style.display = 'none'; return; }
+
+  var dismissed = false;
+  try { dismissed = localStorage.getItem('pitch-dismissed') === '1'; } catch (e) {}
+  if (dismissed) { box.style.display = 'none'; return; }
+
+  box.style.display = 'flex';
+  box.querySelector('.pitch-icon').innerHTML = icon('info');
+  $('pitchText').innerHTML = '<b>Why these numbers:</b> ' + escapeHtml(meta.pitch);
+}
+
+function renderNotices(notices) {
+  var box = $('notices');
+  if (!notices.length) { box.innerHTML = ''; return; }
+  box.innerHTML =
+    '<div class="notice">' + icon('alert') +
+      '<div><b>Heads up</b><ul>' +
+        notices.map(function (n) { return '<li>' + escapeHtml(n) + '</li>'; }).join('') +
+      '</ul></div></div>';
+}
+
+function renderSwitcher(catalog, enabled) {
+  var wrap = $('switcherWrap');
+  if (!enabled || catalog.length < 2) { wrap.style.display = 'none'; return; }
+
+  wrap.style.display = 'inline-flex';
+  var select = $('industrySelect');
+  select.innerHTML = catalog.map(function (c, i) {
+    var label = (i + 1 < 10 ? '0' : '') + (i + 1) + ' · ' + c.name;
+    return '<option value="' + escapeHtml(c.slug) + '"' + (c.slug === STATE.slug ? ' selected' : '') + '>' +
+      escapeHtml(label) + '</option>';
+  }).join('');
+
+  select.onchange = function () {
+    var slug = select.value;
+    if (DEMO_LINKS && DEMO_LINKS[slug]) { window.location.href = DEMO_LINKS[slug]; return; }
+    window.history.replaceState(null, '', '?demo=' + encodeURIComponent(slug));
+    boot(slug);
+  };
+}
+
+
+/* ================================================================================================
+   5 · KPI CARDS
+   ============================================================================================== */
+function renderKpis(kpis) {
+  var grid = $('kpiGrid');
+  if (!kpis.length) {
+    grid.innerHTML = '<div class="card" style="grid-column:1/-1"><div class="empty">' + icon('empty') +
+      '<span>No metrics yet — seed the sheet or check the tab names.</span></div></div>';
+    return;
+  }
+  grid.innerHTML = kpis.map(kpiCard).join('');
+
+  requestAnimationFrame(function () {
+    $$('#kpiGrid .progress > span').forEach(function (el) {
+      el.style.width = (el.dataset.pct || 0) + '%';
+    });
+    $$('#kpiGrid .mini-bars i').forEach(function (el) {
+      el.style.flex = el.dataset.flex || 1;
+    });
+  });
+}
+
+function kpiCard(kpi) {
+  var tone = kpi.tone || 'brand';
+  var tip = kpi.format === 'money' ? fmtMoney(kpi.value) : (kpi.label + ': ' + fmtKpiValue(kpi).replace(/<[^>]+>/g, ' '));
+
+  var html = '<article class="card kpi' + (kpi.alert ? ' alert' : '') + '" data-tone="' + tone + '" title="' + escapeHtml(tip) + '">';
+
+  html += '<div class="kpi-top">' +
+    '<span class="kpi-label">' + escapeHtml(kpi.label) + '</span>' +
+    '<span class="kpi-icon">' + icon(kpi.icon || 'info') + '</span>' +
+  '</div>';
+
+  html += '<div class="kpi-value num">' + fmtKpiValue(kpi) + '</div>';
+
+  if (kpi.caption) html += '<div class="kpi-caption">' + escapeHtml(kpi.caption) + '</div>';
+  if (kpi.caption2) html += '<div class="kpi-caption2">' + escapeHtml(kpi.caption2) + '</div>';
+
+  var foot = '';
+
+  if (kpi.spark && kpi.spark.length > 1) {
+    foot = sparkline(kpi.spark);
+  } else if (typeof kpi.progress === 'number') {
+    var pct = Math.max(0, Math.min(100, Math.round(kpi.progress * 100)));
+    foot = '<div class="progress"><span data-pct="' + pct + '"></span></div>' +
+           (kpi.progressLabel ? '<div class="progress-note">' + escapeHtml(kpi.progressLabel) + '</div>' : '');
+  } else if (kpi.split && (kpi.split.overdueCount || kpi.split.laterCount)) {
+    var od = kpi.split.overdueAmount || 0, later = kpi.split.laterAmount || 0;
+    var denom = (od + later) || 1;
+    foot = '<div class="split-bar">' +
+        '<i style="flex:' + Math.max(1, Math.round(od / denom * 100)) + ';background:var(--danger)"></i>' +
+        '<i style="flex:' + Math.max(1, Math.round(later / denom * 100)) + ';background:var(--warn)"></i>' +
+      '</div>' +
+      '<div class="split-legend">' +
+        '<span><i style="background:var(--danger)"></i>Overdue <b>' + fmtMoney(od, { compact: true }) + '</b> · ' + kpi.split.overdueCount + '</span>' +
+        '<span><i style="background:var(--warn)"></i>Due later <b>' + fmtMoney(later, { compact: true }) + '</b> · ' + kpi.split.laterCount + '</span>' +
+      '</div>';
+  } else if (kpi.items && kpi.items.length) {
+    foot = '<div class="item-list">' + kpi.items.map(function (it) {
+      var d = dayDiff(it.when);
+      var when = d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : d === -1 ? 'Yesterday' : fmtDate(it.when).replace(/ \d{4}$/, '');
+      return '<div class="item"><span class="when">' + escapeHtml(when) + '</span>' +
+             '<span class="who">' + escapeHtml(it.name) + (it.meta ? ' · ' + escapeHtml(it.meta) : '') + '</span></div>';
+    }).join('') + '</div>';
+  } else if (kpi.breakdown && kpi.breakdown.length) {
+    var total = kpi.breakdown.reduce(function (a, b) { return a + b.value; }, 0) || 1;
+    foot = '<div class="mini-bars">' + kpi.breakdown.map(function (b) {
+        return '<i data-flex="' + (b.value / total) + '" style="flex:' + (b.value / total) +
+               ';background:' + (b.color || 'var(--brand)') + '" title="' + escapeHtml(b.label + ': ' + b.value) + '"></i>';
+      }).join('') + '</div>' +
+      '<div class="mini-legend">' + kpi.breakdown.map(function (b) {
+        return '<span><i style="background:' + (b.color || 'var(--brand)') + '"></i>' + escapeHtml(b.label) + ' ' + b.value + '</span>';
+      }).join('') + '</div>';
+  }
+
+  if (foot) html += '<div class="kpi-foot">' + foot + '</div>';
+  return html + '</article>';
+}
+
+var sparkSeq = 0;
+function sparkline(values) {
+  var w = 260, h = 34, pad = 3;
+  var max = Math.max.apply(null, values);
+  var min = Math.min.apply(null, values);
+  var span = (max - min) || 1;
+  var step = values.length > 1 ? (w - pad * 2) / (values.length - 1) : 0;
+
+  var pts = values.map(function (v, i) {
+    return [pad + i * step, pad + (h - pad * 2) * (1 - (v - min) / span)];
+  });
+  var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+  var area = line + ' L' + (pad + (values.length - 1) * step).toFixed(1) + ' ' + h + ' L' + pad + ' ' + h + ' Z';
+  var id = 'sg' + (sparkSeq++);
+
+  return '<svg class="spark" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" aria-hidden="true">' +
+    '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="currentColor" stop-opacity=".26"/>' +
+      '<stop offset="100%" stop-color="currentColor" stop-opacity="0"/>' +
+    '</linearGradient></defs>' +
+    '<path d="' + area + '" fill="url(#' + id + ')" style="color:var(--tone,var(--brand))"/>' +
+    '<path d="' + line + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+      'stroke-linejoin="round" style="color:var(--tone,var(--brand))"/>' +
+    '<circle cx="' + pts[pts.length - 1][0].toFixed(1) + '" cy="' + pts[pts.length - 1][1].toFixed(1) +
+      '" r="2.6" fill="var(--surface)" stroke="currentColor" stroke-width="2" style="color:var(--tone,var(--brand))"/>' +
+  '</svg>';
+}
+
+
+/* ================================================================================================
+   6 · CHARTS
+   ============================================================================================== */
+var PALETTE = ['#4f46e5','#0ea5e9','#10b981','#f59e0b','#f43f5e','#8b5cf6','#64748b','#14b8a6'];
+
+function renderCharts(charts) {
+  var grid = $('chartGrid');
+  if (!charts.length) { grid.innerHTML = ''; return; }
+
+  grid.innerHTML = charts.map(function (chart) {
+    var body;
+    if (chart.type === 'line') body = lineChart(chart);
+    else if (chart.type === 'donut') body = donutChart(chart);
+    else if (chart.type === 'hbars') body = hbarsChart(chart);
+    else body = barsChart(chart);
+
+    return '<section class="card chart-card">' +
+      '<div class="card-head"><div><h3>' + escapeHtml(chart.title) + '</h3>' +
+        (chart.subtitle ? '<p>' + escapeHtml(chart.subtitle) + '</p>' : '') +
+      '</div>' + (chart.note ? '<span class="chip">' + escapeHtml(chart.note) + '</span>' : '') + '</div>' +
+      body + '</section>';
+  }).join('');
+
+  requestAnimationFrame(function () {
+    $$('#chartGrid .hbar-fill').forEach(function (el) { el.style.width = (el.dataset.w || 0) + '%'; });
+    $$('#chartGrid .bar').forEach(function (el, i) { el.style.animationDelay = (i * 45) + 'ms'; });
+    $$('#chartGrid .donut circle.seg').forEach(function (circle, i) {
+      var c = Number(circle.dataset.c), len = Number(circle.dataset.l), off = Number(circle.dataset.o);
+      var gap = Math.min(3, len * 0.3);
+      var visible = Math.max(0, len - gap);
+      circle.style.transitionDelay = (i * 80) + 'ms';
+      circle.setAttribute('stroke-dashoffset', -(off + gap / 2));
+      circle.setAttribute('stroke-dasharray', visible + ' ' + (c - visible));
+    });
+  });
+}
+
+/* ---- 6a · line / area ---- */
+function lineChart(chart) {
+  var values = (chart.values || []).map(Number);
+  if (!values.length) return emptyBlock();
+
+  var isPct = chart.format === 'percent';
+  var w = 340, h = 186, padL = 36, padR = 10, padT = 10, padB = 22;
+  var innerW = w - padL - padR, innerH = h - padT - padB;
+
+  var min = Math.min.apply(null, values);
+  var max = Math.max.apply(null, values);
+  if (isPct) { min = Math.max(0, min - 4); max = Math.min(100, max + 3); }
+  else { min = Math.min(0, min); max = max * 1.08 || 1; }
+  var span = (max - min) || 1;
+
+  function x(i) { return padL + (values.length > 1 ? innerW * i / (values.length - 1) : innerW / 2); }
+  function y(v) { return padT + innerH * (1 - (v - min) / span); }
+
+  var pts = values.map(function (v, i) { return [x(i), y(v)]; });
+
+  // smooth path (quadratic through midpoints — keeps peaks visible)
+  var path = 'M' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
+  for (var i = 1; i < pts.length; i++) {
+    var prev = pts[i - 1], cur = pts[i];
+    var mx = (prev[0] + cur[0]) / 2;
+    path += ' Q' + prev[0].toFixed(1) + ' ' + prev[1].toFixed(1) + ' ' + mx.toFixed(1) + ' ' + ((prev[1] + cur[1]) / 2).toFixed(1);
+    path += ' T' + cur[0].toFixed(1) + ' ' + cur[1].toFixed(1);
+  }
+  var area = path + ' L' + pts[pts.length - 1][0].toFixed(1) + ' ' + (padT + innerH) +
+             ' L' + pts[0][0].toFixed(1) + ' ' + (padT + innerH) + ' Z';
+
+  // grid + y labels
+  var grid = '', ticks = 3;
+  for (var g = 0; g <= ticks; g++) {
+    var val = min + (span * g / ticks);
+    var gy = y(val).toFixed(1);
+    grid += '<line class="grid" x1="' + padL + '" y1="' + gy + '" x2="' + (w - padR) + '" y2="' + gy + '"/>' +
+            '<text class="axis" x="' + (padL - 6) + '" y="' + (Number(gy) + 3) + '" text-anchor="end">' +
+            fmtAxis(val, chart.format) + '</text>';
+  }
+
+  // x labels — thin them out so they never collide
+  var step = Math.ceil(values.length / 6);
+  var xLabels = '';
+  (chart.labels || []).forEach(function (label, idx) {
+    if (idx % step !== 0 && idx !== values.length - 1) return;
+    xLabels += '<text class="axis" x="' + x(idx).toFixed(1) + '" y="' + (h - 4) + '" text-anchor="middle">' +
+      escapeHtml(label) + '</text>';
+  });
+
+  var dots = '';
+  var maxDots = 16;
+  var dotStep = Math.ceil(values.length / maxDots);
+  pts.forEach(function (p, idx) {
+    if (idx % dotStep !== 0 && idx !== pts.length - 1) return;
+    var isLast = idx === pts.length - 1;
+    dots += '<circle class="' + (isLast ? 'dot-last' : 'dot') + '" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) +
+      '" r="' + (isLast ? 3.6 : 2.4) + '"><title>' + escapeHtml((chart.labels || [])[idx] + ': ' +
+      fmtChartValue(values[idx], chart.format)) + '</title></circle>';
+  });
+
+  var gradId = 'lg' + Math.floor(Math.random() * 100000);
+
+  return '<svg class="linechart" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
+    '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="var(--accent,var(--brand))" stop-opacity=".26"/>' +
+      '<stop offset="100%" stop-color="var(--accent,var(--brand))" stop-opacity="0"/>' +
+    '</linearGradient></defs>' +
+    grid +
+    '<path d="' + area + '" fill="url(#' + gradId + ')"/>' +
+    '<path class="path" d="' + path + '"/>' +
+    dots + xLabels +
+  '</svg>';
+}
+
+/* ---- 6b · vertical bars ---- */
+function barsChart(chart) {
+  var values = (chart.values || []).map(Number);
+  if (!values.length) return emptyBlock();
+
+  var max = Math.max.apply(null, values.concat([1]));
+  var step = Math.ceil(values.length / 12);
+
+  return '<div class="bars" style="height:' + (values.length > 20 ? 150 : 180) + 'px">' +
+    values.map(function (v, i) {
+      var pct = Math.max(2, Math.round((v / max) * 100));
+      var showLabel = values.length <= 12 || i % step === 0;
+      return '<div class="bar-col" title="' + escapeHtml((chart.labels || [])[i] + ': ' + fmtChartValue(v, chart.format)) + '">' +
+        '<span class="bar-val">' + (v && showLabel ? fmtChartValue(v, chart.format) : '') + '</span>' +
+        '<div class="bar-track"><div class="bar' + (v ? '' : ' is-zero') + '" style="height:' + pct + '%"></div></div>' +
+        '<span class="bar-x">' + (showLabel ? escapeHtml((chart.labels || [])[i]) : '') + '</span>' +
+      '</div>';
+    }).join('') +
+  '</div>';
+}
+
+/* ---- 6c · donut ---- */
+function donutChart(chart) {
+  var values = (chart.values || []).map(Number);
+  var labels = chart.labels || [];
+  var total = values.reduce(function (a, b) { return a + b; }, 0);
+  if (!total) return emptyBlock();
+
+  var size = 148, stroke = 17, r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  var offset = 0;
+
+  var segments = values.map(function (v, i) {
+    var frac = v / total;
+    var len = frac * c;
+    var seg = '<circle class="seg" cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" ' +
+      'stroke="' + PALETTE[i % PALETTE.length] + '" stroke-width="' + stroke + '" stroke-linecap="round" ' +
+      'stroke-dasharray="0 ' + c.toFixed(2) + '" data-o="' + offset.toFixed(2) +
+      '" data-l="' + len.toFixed(2) + '" data-c="' + c.toFixed(2) + '">' +
+      '<title>' + escapeHtml(labels[i] + ': ' + fmtChartValue(v, chart.format) + ' (' + Math.round(frac * 100) + '%)') + '</title></circle>';
+    offset += len;
+    return seg;
+  }).join('');
+
+  var legend = values.map(function (v, i) {
+    return '<div class="legend-row">' +
+      '<span class="legend-dot" style="background:' + PALETTE[i % PALETTE.length] + '"></span>' +
+      '<span class="legend-label">' + escapeHtml(labels[i]) + '</span>' +
+      '<span class="legend-val">' + (chart.format === 'money' ? compact(v) : fmtNumber(v, 0)) + '</span>' +
+      '<span class="legend-pct">' + Math.round((v / total) * 100) + '%</span>' +
+    '</div>';
+  }).join('');
+
+  var centerValue = chart.format === 'money' ? compact(total) : fmtNumber(total, 0);
+
+  return '<div class="donut-wrap">' +
+    '<div class="donut" style="width:' + size + 'px;height:' + size + 'px">' +
+      '<svg width="' + size + '" height="' + size + '">' + segments + '</svg>' +
+      '<div class="donut-center"><b class="num">' + centerValue + '</b><span>' +
+        (chart.format === 'money' ? 'Total' : 'Total') + '</span></div>' +
+    '</div>' +
+    '<div class="legend">' + legend + '</div>' +
+  '</div>';
+}
+
+/* ---- 6d · horizontal bars ---- */
+function hbarsChart(chart) {
+  var values = (chart.values || []).map(Number);
+  var labels = chart.labels || [];
+  if (!values.length) return emptyBlock();
+
+  var max = Math.max.apply(null, values.concat([1]));
+
+  return '<div class="hbars">' + values.map(function (v, i) {
+    var pct = Math.max(1.5, Math.round((v / max) * 100));
+    return '<div class="hbar-row">' +
+      '<div class="hbar-top">' +
+        '<span class="lbl"><i style="width:7px;height:7px;border-radius:2px;background:' + PALETTE[i % PALETTE.length] +
+          ';display:inline-block;flex:0 0 7px"></i><span>' + escapeHtml(labels[i]) + '</span></span>' +
+        '<span class="val">' + fmtChartValue(v, chart.format) + '</span>' +
+      '</div>' +
+      '<div class="hbar-track"><div class="hbar-fill" data-w="' + pct + '" style="background:' + PALETTE[i % PALETTE.length] + '"></div></div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function emptyBlock() {
+  return '<div class="empty">' + icon('empty') + '<span>No data for this period yet.</span></div>';
+}
+
+
+/* ================================================================================================
+   7 · RECENT RECORDS TABLE
+   ============================================================================================== */
+function renderTable(table) {
+  if (!table || !table.columns || !table.columns.length) {
+    $('tableTitle').textContent = 'Recent records';
+    $('tableSub').textContent = '';
+    $('tableHead').innerHTML = '';
+    $('tableBody').innerHTML = '<tr><td><div class="empty">' + icon('empty') + '<span>No table defined.</span></div></td></tr>';
+    return;
+  }
+
+  $('tableTitle').textContent = table.title || 'Recent records';
+  $('tableSub').textContent = table.subtitle || '';
+  $('tableChip').textContent = (table.rows || []).length + ' rows';
+
+  $('tableHead').innerHTML = table.columns.map(function (c) {
+    var right = c.type === 'money' ? ' class="right"' : '';
+    return '<th' + right + '>' + escapeHtml(c.label) + '</th>';
+  }).join('');
+
+  if (!(table.rows || []).length) {
+    $('tableBody').innerHTML = '<tr><td colspan="' + table.columns.length + '">' +
+      '<div class="empty">' + icon('empty') + '<span>No records yet.</span></div></td></tr>';
+    $('tableFootInfo').textContent = 'Nothing to show';
+    return;
+  }
+
+  $('tableBody').innerHTML = table.rows.map(function (row) {
+    return '<tr>' + table.columns.map(function (c, i) {
+      return cell(row[c.key], c, i === 0);
+    }).join('') + '</tr>';
+  }).join('');
+
+  $('tableFootInfo').innerHTML = 'Showing the <b>' + table.rows.length + '</b> most recent records' +
+    (STATE.data && STATE.data.meta && STATE.data.meta.cached ? ' · served from cache' : '');
+  $('tableFootSource').textContent = 'Source: Google Sheets · ' + (STATE.data && STATE.data.meta ? STATE.data.meta.name : '');
+}
+
+function cell(value, col, isFirst) {
+  var type = col.type || 'text';
+
+  if (type === 'money') {
+    var n = Number(value) || 0;
+    return '<td class="money">' + (n ? fmtMoney(n) : '<span style="color:var(--faint)">—</span>') + '</td>';
+  }
+  if (type === 'num') {
+    return '<td class="num">' + (value === '' || value === null || value === undefined
+      ? '<span style="color:var(--faint)">—</span>' : fmtNumber(value, Number(value) % 1 ? 1 : 0)) + '</td>';
+  }
+  if (type === 'date') {
+    var d = fmtDate(value);
+    return '<td class="' + (d ? '' : 'dim') + '">' + (d || '—') + '</td>';
+  }
+  if (type === 'status' || type === 'badge') {
+    if (!value) return '<td class="dim">—</td>';
+    return '<td><span class="badge ' + toneFor(value, type) + '">' + escapeHtml(value) + '</span></td>';
+  }
+
+  var text = value == null ? '' : String(value);
+  if (!text) return '<td class="dim">—</td>';
+  return '<td class="' + (isFirst ? 'primary' : '') + '" title="' + escapeHtml(text) + '">' + escapeHtml(text) + '</td>';
+}
+
+/** Colour a status/badge by keyword — same vocabulary the seeder uses. */
+function toneFor(text, type) {
+  var t = String(text).toLowerCase();
+  if (/(paid|received|cleared|won|active|complete|delivered|confirmed|closed|enrolled|on.?time|yes|delivered)/.test(t)) return 'ok';
+  if (/(overdue|late|blocked|lost|cancel|churn|no.?show|exception|returned|left|dropped|delayed|unpaid|refund)/.test(t)) return 'danger';
+  if (/(pending|due|partial|hold|progress|editing|scheduled|tentative|awaiting|deposit|in transit|expired|frozen|unpaid)/.test(t)) return 'warn';
+  if (/(new|qualified|proposal|viewing|negotiation|token|enquiry|open|growth|sme)/.test(t)) return 'info';
+  return type === 'badge' ? 'brand' : '';
+}
+
+
+/* ================================================================================================
+   8 · EVENTS
+   ============================================================================================== */
+(function initTheme() {
+  var stored = null;
+  try { stored = localStorage.getItem('dash-theme'); } catch (e) {}
+  if (stored === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+})();
+
+document.addEventListener('DOMContentLoaded', function () {
+  // theme
+  $('themeBtn').addEventListener('click', function () {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (dark) document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', 'dark');
+    try { localStorage.setItem('dash-theme', dark ? 'light' : 'dark'); } catch (e) {}
+  });
+
+  // refresh
+  $('refreshBtn').addEventListener('click', function () { boot(STATE.slug); });
+
+  // about modal
+  var modal = $('aboutModal');
+  $('aboutBtn').addEventListener('click', function () { modal.classList.add('open'); });
+  $('aboutClose').addEventListener('click', function () { modal.classList.remove('open'); });
+  modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.remove('open'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') modal.classList.remove('open'); });
+
+  // pitch dismiss
+  $('pitchClose').addEventListener('click', function () {
+    $('pitch').style.display = 'none';
+    try { localStorage.setItem('pitch-dismissed', '1'); } catch (e) {}
+  });
+
+  // keyboard: R = refresh
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'r' && !e.metaKey && !e.ctrlKey && document.activeElement.tagName !== 'INPUT') boot(STATE.slug);
+  });
+
+  boot(INITIAL_SLUG);
+});
+</script>
+<script>
+  window.DEMO_PAYLOAD = {"meta":{"slug":"photography","name":"Event Photography Studio","short":"Studio","tagline":"Seasonal bookings, package value and delivery pipeline","pitch":"Wedding and event work is violently seasonal: a few months carry the year. Knowing how much of the season is already booked, what the average package is worth, and which events are still undelivered tells the studio whether to sell or to shoot.","icon":"camera","accent":"#7c3aed","layout":{"preset":"calendar"},"company":"","generatedAt":"2026-10-24T10:46:18.137Z","currency":"PKR","currencySymbol":"Rs","locale":"en-PK","switcher":true,"cached":false,"rows":890},"kpis":[{"label":"Events (30d)","value":18,"format":"number","icon":"camera","tone":"brand","caption":"210 shoots delivered lifetime","caption2":"","spark":[25,18,16,15,14,12,10,7,8,12,9,18],"progress":null,"progressLabel":"","split":null,"breakdown":null,"items":null,"unit":"","dp":null,"alert":false},{"label":"Revenue This Year","value":50270000,"format":"money","icon":"wallet","tone":"ok","caption":"Rs 83.8M lifetime · 70% margin","caption2":"","spark":[9875000,6025000,7080000,6365000,5720000,6665000,3600000,3500000,2455000,5325000,2795000,6765000],"progress":null,"progressLabel":"","split":null,"breakdown":null,"items":null,"unit":"","dp":null,"alert":false},{"label":"Average Package","value":399071.4285714286,"format":"money","icon":"target","tone":"brand","caption":"Revenue ÷ delivered events","caption2":"","spark":null,"progress":null,"progressLabel":"","split":null,"breakdown":null,"items":null,"unit":"","dp":null,"alert":false},{"label":"Booked Pipeline","value":53010000,"format":"money","icon":"briefcase","tone":"info","caption":"145 confirmed · 58 still tentative","caption2":"","spark":null,"progress":null,"progressLabel":"","split":null,"breakdown":null,"items":null,"unit":"","dp":null,"alert":false},{"label":"Pending Deliveries","value":65,"format":"number","icon":"clock","tone":"warn","caption":"Galleries still in editing or awaiting selection","caption2":"","spark":null,"progress":null,"progressLabel":"","split":null,"breakdown":null,"items":null,"unit":"","dp":null,"alert":false},{"label":"Referral Share","value":0.3269230769230769,"format":"percent","icon":"users","tone":"ok","caption":"85 of 260 bookings came by referral","caption2":"","spark":null,"progress":0.3269230769230769,"progressLabel":"Healthy studios run 30%+","split":null,"breakdown":null,"items":null,"unit":"","dp":null,"alert":false}],"charts":[{"type":"bars","title":"Revenue by month","subtitle":"Wedding-season shape, 12 months","labels":["Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct"],"values":[9875000,6025000,7080000,6365000,5720000,6665000,3600000,3500000,2455000,5325000,2795000,6765000],"format":"money","note":"","total":66170000},{"type":"donut","title":"Revenue by event type","subtitle":"Weddings vs corporate vs portraits","labels":["Wedding","Mehndi","Portrait Session","Product Shoot","Corporate Event","Other"],"values":[20115000,18110000,11680000,10895000,9365000,13640000],"format":"money","note":"","total":83805000},{"type":"hbars","title":"Bookings by source","subtitle":"Where shoots are won","labels":["Referral","Instagram","Past Client","Facebook","Google","Wedding Portal"],"values":[85,73,45,24,22,11],"format":"number","note":"","total":260}],"table":{"title":"Recent events","subtitle":"Newest shoots","columns":[{"key":"date","label":"Date","type":"date"},{"key":"client","label":"Client","type":"text"},{"key":"type","label":"Type","type":"badge"},{"key":"package","label":"Package","type":"badge"},{"key":"revenue","label":"Revenue","type":"money"},{"key":"status","label":"Status","type":"status"}],"rows":[{"date":"2026-10-22T16:59:00.000Z","client":"Kashif Iqbal","type":"Mehndi","package":"Signature","revenue":300000,"status":"Editing"},{"date":"2026-10-22T11:12:00.000Z","client":"Kashif Raza","type":"Wedding","package":"Gold","revenue":175000,"status":"Delivered"},{"date":"2026-10-21T11:53:00.000Z","client":"Ayesha Hussain","type":"Wedding","package":"Silver","revenue":220000,"status":"Editing"},{"date":"2026-10-19T12:27:00.000Z","client":"Ali Malik","type":"Wedding","package":"Platinum","revenue":735000,"status":"Delivered"},{"date":"2026-10-18T18:29:00.000Z","client":"Omar Memon","type":"Wedding","package":"Gold","revenue":640000,"status":"Delivered"},{"date":"2026-10-17T10:31:00.000Z","client":"Kashif Zafar","type":"Nikkah","package":"Platinum","revenue":90000,"status":"Delivered"},{"date":"2026-10-15T20:18:00.000Z","client":"Ahsan Rehman","type":"Nikkah","package":"Gold","revenue":325000,"status":"Delivered"},{"date":"2026-10-13T12:43:00.000Z","client":"Nimra Qureshi","type":"Mehndi","package":"Platinum","revenue":535000,"status":"Delivered"}]},"catalog":[{"slug":"agency","name":"Digital Marketing Agency","short":"Agency","tagline":"Pipeline, retainers and cash collection for a growth agency","pitch":"Retainer agencies live on three numbers: signed recurring revenue, cash actually collected, and whether the pipeline behind it is real. This puts all three on one screen so the team stops arguing about impressions and starts chasing invoices.","icon":"target","accent":"#6366f1","index":1},{"slug":"realestate","name":"Real Estate · Karachi","short":"Realty","tagline":"Listings, enquiries and commissions across a Karachi agency","pitch":"Property is a slow, high-ticket sale: what matters is how much stock is live, whether enquiries turn into viewings, and how long a listing sits before it moves. This tracks the whole chain from portal enquiry to commission cheque.","icon":"home","accent":"#0ea5e9","index":2},{"slug":"coaching","name":"Coaching & Courses","short":"Coaching","tagline":"Cohort revenue, attendance and completion for a coaching business","pitch":"Coaching revenue is lumpy and churn hides in silence. This tracks cash collected per cohort, who actually shows up, and how much fee is still outstanding — the three things that decide whether the next cohort is profitable.","icon":"book","accent":"#8b5cf6","index":3},{"slug":"ecommerce","name":"Retail Boutique · E-commerce","short":"Store","tagline":"Revenue, margin and repeat buyers for an online boutique","pitch":"Online retail dashboards drown in vanity metrics. This one keeps the four numbers that decide profitability — revenue, average order value, gross margin and repeat rate — plus where the revenue actually comes from.","icon":"cart","accent":"#ec4899","index":4},{"slug":"restaurant","name":"Restaurant & Café","short":"Cafe","tagline":"Daily sales, covers and prime cost for a café or restaurant","pitch":"Restaurant margins are decided weekly, not monthly. Prime cost (food + labour) is the single number that makes or breaks the month — this puts it next to covers, average check and the delivery channel mix so decisions happen while they still matter.","icon":"coffee","accent":"#f97316","index":5},{"slug":"salon","name":"Salon · Spa · Aesthetics","short":"Salon","tagline":"Bookings, ticket size and rebooking for a salon or medspa","pitch":"A salon is a chair-utilisation business. Every empty slot and every no-show is revenue that cannot be resold. This shows utilisation, average ticket and rebooking rate side by side — the three levers that actually grow a salon.","icon":"scissors","accent":"#db2777","index":6},{"slug":"gym","name":"Gym · Fitness Studio","short":"Gym","tagline":"Members, MRR and churn for a boutique fitness studio","pitch":"Fitness businesses leak members slowly and then all at once. Monthly churn, visits per member and renewals expiring in the next two weeks are the early-warning system — everything else is a lagging indicator.","icon":"activity","accent":"#16a34a","index":7},{"slug":"school","name":"School · Academy","short":"School","tagline":"Enrollment, fee collection and attendance for a school","pitch":"Schools run on fee collection cycles and attendance. A dashboard that shows arrears and collection rate by month lets the admin office chase the right parents before the term ends, instead of discovering a shortfall at salary time.","icon":"book","accent":"#0284c7","index":8},{"slug":"clinic","name":"Clinic · Dental","short":"Clinic","tagline":"Production, collections and no-shows for a dental practice","pitch":"A dental practice has four dials: how many new patients arrive, how full the chair schedule is, what share of treatment is actually collected, and how old the receivables get. Moving any one of them moves profit faster than cutting costs.","icon":"heart","accent":"#0d9488","index":9},{"slug":"travel","name":"Travel Agency","short":"Travel","tagline":"Bookings, GMV and deposits for a travel agency","pitch":"Travel agencies carry huge gross booking value on thin commission margins. What matters is how much of the GMV is confirmed, how much deposit is still uncollected, and which destinations actually make money.","icon":"plane","accent":"#0891b2","index":10},{"slug":"construction","name":"Construction Contractor","short":"Build","tagline":"Project margin, billing and receivables for a contractor","pitch":"Contractors go broke with a full order book. Progress billing lags cost, retainage sits uncollected for months, and a 10% labour overrun can wipe out a quarter of the job margin. This shows margin per project and how much cash is stuck in receivables.","icon":"tool","accent":"#b45309","index":11},{"slug":"photography","name":"Event Photography Studio","short":"Studio","tagline":"Seasonal bookings, package value and delivery pipeline","pitch":"Wedding and event work is violently seasonal: a few months carry the year. Knowing how much of the season is already booked, what the average package is worth, and which events are still undelivered tells the studio whether to sell or to shoot.","icon":"camera","accent":"#7c3aed","index":12},{"slug":"saas","name":"SaaS · Software","short":"SaaS","tagline":"MRR, retention and support load for a software business","pitch":"SaaS is a subscription machine: MRR is the score, net revenue retention is the engine, and churn is the leak. Support tickets belong on the same screen because they predict churn before the cancellation email does.","icon":"cloud","accent":"#2563eb","index":13},{"slug":"logistics","name":"Logistics & Freight","short":"Freight","tagline":"On-time performance, lane profitability and receivables","pitch":"Freight is a promise business: customers pay for on-time, in-full delivery. OTIF, cost per shipment and revenue per lane show whether the operation is profitable or just busy — and receivables show whether the cash ever arrives.","icon":"truck","accent":"#0f766e","index":14},{"slug":"lawfirm","name":"Law Firm","short":"Legal","tagline":"Utilisation, realisation and lockup for a law practice","pitch":"Law firms have a famous three-step leak: hours worked, hours billed, hours collected. Utilisation, realisation and collection rate measure each step — and lockup (WIP + AR days) is the number that decides whether the firm needs a credit line.","icon":"scale","accent":"#334155","index":15},{"slug":"hotel","name":"Boutique Hotel · Islamabad","short":"Hotel","tagline":"Occupancy, ADR and RevPAR for a 44-room boutique property","pitch":"Hotels do not sell rooms, they sell room-nights at a price that moves with the calendar. RevPAR (rate × occupancy) is the only number that cannot be flattered by discounting, so it sits next to ADR and the booking mix that produced it.","icon":"bed","accent":"#0891b2","index":16},{"slug":"factory","name":"Manufacturing Plant · Plastics","short":"Factory","tagline":"OEE, scrap and downtime for a three-line moulding plant","pitch":"Plant managers argue about output; the money is in OEE. This breaks OEE into its three honest parts — was the machine running, did it run at rate, did it make good parts — and then shows which downtime reason is eating the shift.","icon":"factory","accent":"#f97316","index":17},{"slug":"recruitment","name":"Recruitment Agency","short":"Recruiting","tagline":"Fill rate, time-to-fill and fees for a contingency recruiter","pitch":"A recruitment desk is judged on three things: how many of the roles you took actually closed, how long they took, and what the fee was worth as a share of salary. Everything else is activity theatre.","icon":"users","accent":"#7c3aed","index":18},{"slug":"pharmacy","name":"Community Pharmacy","short":"Pharmacy","tagline":"Scripts, margins and stock cover for a high-street pharmacy","pitch":"A pharmacy makes most of its money on a shrinking share of the counter. What matters is how many scripts walk in, what margin survives after the distributor, and whether the fast movers are on the shelf before the customer gives up and goes elsewhere.","icon":"pill","accent":"#059669","index":19},{"slug":"poultry","name":"Broiler Poultry Farm","short":"Poultry","tagline":"FCR, mortality and live weight per flock cycle","pitch":"A broiler farm is a feed-conversion business with a five-week clock. FCR tells you whether the feed is turning into chicken, mortality tells you whether the shed is healthy, and the realised rate per kg tells you whether the cycle made money.","icon":"bird","accent":"#ca8a04","index":20},{"slug":"fuelstation","name":"Fuel Station · Retail Pump","short":"Fuel","tagline":"Litres, per-litre dealer margin and shop sales for a retail pump","pitch":"The dealer margin on petrol and diesel is fixed by the regulator, so profit cannot come from price. It comes from litres moved, from the shop on the forecourt, and from how much of the day’s sales walked out on credit.","icon":"fuel","accent":"#dc2626","index":21},{"slug":"msp","name":"Managed IT Services · MSP","short":"MSP","tagline":"SLA adherence, first response and endpoint load for an MSP","pitch":"Managed services is a contract business: you promise a response time, a resolution time and an uptime, then you staff to keep them. This shows whether the promise is being kept before the quarterly review does.","icon":"server","accent":"#2563eb","index":22},{"slug":"autoshop","name":"Auto Workshop & Dealership","short":"Workshop","tagline":"Job cards, bay utilisation and parts margin for a service centre","pitch":"A workshop has a fixed number of bays and a fixed number of hours in a day; profit is how much of that bay-time you sell, at what ticket, with how much parts margin attached — minus the cars that come back because the job was not done right the first time.","icon":"car","accent":"#475569","index":23},{"slug":"printing","name":"Printing Press · Offset","short":"Print","tagline":"Impressions, waste and machine uptime for an offset press","pitch":"Offset printing is priced per thousand impressions, so every wasted sheet is margin thrown in the bin. This tracks what came off the press, how much of it was make-ready waste, and which jobs are still stuck in prepress.","icon":"printer","accent":"#be123c","index":24},{"slug":"textile","name":"Garment Manufacturing Unit","short":"Apparel","tagline":"Line efficiency, defects and on-time shipment for a garment unit","pitch":"Apparel is a promise made six weeks before delivery, priced per piece. Efficiency says whether the line is beating its SAM target, DHU says how badly it is sewing, and on-time shipment decides whether the buyer places the next order.","icon":"shirt","accent":"#0d9488","index":25},{"slug":"bakery","name":"Bakery & Confectionery","short":"Bakery","tagline":"Baked weight, wastage and cake orders for a retail bakery","pitch":"A bakery sells weight that spoils by evening. The trade-off is brutal: bake too little and the shelf is empty by 7pm, bake too much and the waste bin eats the day’s margin. This shows both sides of that trade per product line.","icon":"bread","accent":"#b45309","index":26},{"slug":"courier","name":"Courier · Last-Mile Delivery","short":"Courier","tagline":"On-time delivery, COD cash and cost per shipment","pitch":"A courier business runs on three clocks: how fast a parcel moves, how much of the cash on delivery has actually been remitted to the shipper, and what each doorstep attempt costs when it fails. Volume without those three is just activity.","icon":"package","accent":"#ea580c","index":27},{"slug":"archfirm","name":"Architecture & Design Studio","short":"Studio","tagline":"Billable utilisation, fees and WIP for a design studio","pitch":"A design studio sells hours it never gets back. Utilisation says how much of the payroll reached a client, fee per square foot says whether the work was priced right, and WIP says how much finished thinking is still sitting uninvoiced.","icon":"ruler","accent":"#334155","index":28},{"slug":"vetclinic","name":"Veterinary Clinic","short":"Vet","tagline":"Consults, species mix and vaccination coverage for a vet clinic","pitch":"A vet practice lives on repeat visits: a vaccinated puppy is a fifteen-year customer. This tracks consults per day, what each species is actually worth, and how much of the registered population is overdue for its boosters.","icon":"paw","accent":"#16a34a","index":29},{"slug":"solar","name":"Solar EPC Installer","short":"Solar","tagline":"kW installed, cost per watt and net-metering approvals","pitch":"A solar installer is paid per kilowatt and judged on rupees per watt. This tracks how much capacity left the warehouse, what it cost to install, and how many systems are still waiting on a net-metering approval before the customer starts saving.","icon":"sun","accent":"#eab308","index":30}],"notices":[]};
+  window.DEMO_LINKS = {"agency":"01_Digital-Marketing-Agency.html","realestate":"02_Real-Estate-Karachi.html","coaching":"03_Coaching-Courses.html","ecommerce":"04_Retail-Boutique-E-commerce.html","restaurant":"05_Restaurant-Caf.html","salon":"06_Salon-Spa-Aesthetics.html","gym":"07_Gym-Fitness-Studio.html","school":"08_School-Academy.html","clinic":"09_Clinic-Dental.html","travel":"10_Travel-Agency.html","construction":"11_Construction-Contractor.html","photography":"12_Event-Photography-Studio.html","saas":"13_SaaS-Software.html","logistics":"14_Logistics-Freight.html","lawfirm":"15_Law-Firm.html","hotel":"16_Boutique-Hotel-Islamabad.html","factory":"17_Manufacturing-Plant-Plastics.html","recruitment":"18_Recruitment-Agency.html","pharmacy":"19_Community-Pharmacy.html","poultry":"20_Broiler-Poultry-Farm.html","fuelstation":"21_Fuel-Station-Retail-Pump.html","msp":"22_Managed-IT-Services-MSP.html","autoshop":"23_Auto-Workshop-Dealership.html","printing":"24_Printing-Press-Offset.html","textile":"25_Garment-Manufacturing-Unit.html","bakery":"26_Bakery-Confectionery.html","courier":"27_Courier-Last-Mile-Delivery.html","archfirm":"28_Architecture-Design-Studio.html","vetclinic":"29_Veterinary-Clinic.html","solar":"30_Solar-EPC-Installer.html"};
+</script>
+</body>
+</html>

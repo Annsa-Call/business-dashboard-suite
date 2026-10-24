@@ -1,0 +1,22 @@
+# Netlify configuration (only used if you host on Netlify instead of Cloudflare).
+# Cloudflare Pages ignores this file — it reads _headers, _redirects and 404.html.
+[build]
+  publish = "."
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
+
+[[headers]]
+  for = "/screenshots/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[redirects]]
+  from = "/portfolio"
+  to = "/"
+  status = 301
