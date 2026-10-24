@@ -9,7 +9,8 @@ npm init -y && npm i -D playwright@1.47.2 && npx playwright install chromium
 
 node tools/build-demos.js       # seed → validate → demos/*.html → screenshots/*.png
 SKIP_SHOTS=1 node tools/build-demos.js   # skip the browser (fast, data only)
-node tools/build-portfolio.js   # payloads → portfolio/index.html (30 cards, 9 groups)
+python3 tools/make-thumbs.py    # screenshots → thumbs/*.webp (760px, ~21 KB) + assets/ portrait sizes
+node tools/build-portfolio.js   # payloads → index.html + portfolio/index.html + _headers + 404
 ```
 
 What `build-demos.js` does:

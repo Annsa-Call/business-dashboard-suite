@@ -5,10 +5,14 @@
   X-Frame-Options: SAMEORIGIN
   Permissions-Policy: geolocation=(), microphone=(), camera=()
 
-# demo pages and the portfolio change whenever you rebuild — never serve a stale copy
+# pages change whenever you rebuild — never serve a stale copy
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
 
-# screenshots are content-addressed by filename; they can be cached hard
+# thumbnails and the portrait are content-stable; cache them hard (this is what makes it feel instant)
+/thumbs/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
 /screenshots/*
   Cache-Control: public, max-age=31536000, immutable

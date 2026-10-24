@@ -3,12 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Business Dashboard Suite &mdash; 30 industry demos</title>
-<meta name="description" content="Thirty Google Sheets + Apps Script business dashboards: agency, real estate, clinic, restaurant, hotel, factory, pharmacy, poultry, fuel station, MSP, workshop, printing press, apparel, bakery, courier, design studio, vet, solar and more. Live demos, realistic sample data, no licences.">
-<meta property="og:title" content="Business Dashboard Suite — 30 industry demos">
-<meta property="og:description" content="A working dashboard per industry, each fed by one Google Sheet. Built with Apps Script and a single HTML file.">
-<meta property="og:type" content="website">
+<title>Ammar — Business Dashboard Portfolio · 30 industry demos</title>
+<meta name="description" content="Portfolio of Ammar, a Karachi-based dashboard developer. Thirty working business dashboards built with Google Sheets, Apps Script and one HTML file — hotel RevPAR, factory OEE, pharmacy stock cover, poultry FCR and more. Live demos, no licences, no per-seat fees.">
+<meta name="author" content="Ammar">
+<meta name="theme-color" content="#070b16">
+<meta property="og:title" content="Ammar — Business Dashboard Portfolio · 30 industries">
+<meta property="og:description" content="Thirty working dashboards, one Google Sheet each. Every trade gets its own layout, its own units and its own six numbers.">
+<meta property="og:type" content="profile">
+<meta property="og:image" content="thumbs/01_Digital-Marketing-Agency.webp">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%237c6cf7'/><path d='M24 70l14-18 10 10 18-24 10 8' stroke='white' stroke-width='7' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preload" as="image" href="assets/ammar-320.webp" type="image/webp">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Person","name":"Ammar",
+ "jobTitle":"Dashboard developer","address":{"@type":"PostalAddress","addressLocality":"Karachi","addressCountry":"PK"},
+ "email":"ammarthemediamanager@gmail.com",
+ "description":"Builds business dashboards on Google Sheets and Apps Script for clinics, factories, hotels, pharmacies and other trades.",
+ "knowsAbout":["Google Apps Script","Google Sheets","Business intelligence","KPI design","Data visualisation"]}
+</script>
 <style>
 :root{
   --bg:#070b16; --surface:#0f1626; --surface-2:#131c2f; --line:#1e2942;
@@ -18,28 +30,75 @@
   --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
 }
 *{box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;
-  -webkit-font-smoothing:antialiased}
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
     radial-gradient(1100px 600px at 10% -10%, rgba(124,108,247,.22), transparent 70%),
     radial-gradient(900px 520px at 95% 0%, rgba(14,165,233,.14), transparent 68%);}
-.wrap{max-width:1280px;margin:0 auto;padding:34px 24px 70px}
+.wrap{max-width:1280px;margin:0 auto;padding:30px 24px 70px}
 a{color:inherit;text-decoration:none}
 h1,h2,h3,p{margin:0}
+img{max-width:100%}
+
+/* ---------------- top bar ---------------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:26px}
+.who{display:flex;align-items:center;gap:11px;min-width:0}
+.who img{width:44px;height:44px;border-radius:13px;object-fit:cover;
+  box-shadow:0 0 0 1px rgba(255,255,255,.14),0 8px 22px -10px rgba(0,0,0,.8)}
+.who b{display:block;font-size:14px;font-weight:680;letter-spacing:-.01em;line-height:1.2}
+.who span{display:block;font-size:11.5px;color:var(--muted);line-height:1.3}
+.top nav{display:flex;gap:6px;flex-wrap:wrap}
+.top nav a{font-size:12.5px;font-weight:560;color:var(--ink-2);padding:7px 12px;border-radius:9px;
+  border:1px solid transparent;transition:background .15s,border-color .15s}
+.top nav a:hover{background:var(--surface);border-color:var(--line)}
+
+/* ---------------- hero ---------------- */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:38px;align-items:center;margin:10px 0 34px}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:640;letter-spacing:.14em;
   text-transform:uppercase;color:var(--brand-2);background:rgba(124,108,247,.12);
   border:1px solid rgba(124,108,247,.28);padding:6px 12px;border-radius:999px}
-.hero{margin:22px 0 30px;max-width:860px}
-.hero h1{font-size:clamp(30px,4.4vw,50px);line-height:1.06;font-weight:740;letter-spacing:-.035em}
+.hero h1{font-size:clamp(30px,4.2vw,50px);line-height:1.05;font-weight:740;letter-spacing:-.035em;margin-top:16px}
 .hero h1 em{font-style:normal;background:linear-gradient(100deg,#a78bfa,#38bdf8);-webkit-background-clip:text;
   background-clip:text;color:transparent}
-.hero p{margin-top:16px;color:var(--ink-2);font-size:15.5px;max-width:68ch}
-.stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:118px}
+.hero .lede{margin-top:16px;color:var(--ink-2);font-size:15.5px;max-width:62ch}
+.hero .lede b{color:var(--ink);font-weight:640}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:620;
+  padding:11px 18px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+  transition:transform .15s,border-color .15s,background .15s}
+.btn:hover{transform:translateY(-1px);border-color:#2b3a5c;background:var(--surface-2)}
+.btn.primary{background:linear-gradient(140deg,#7c6cf7,#4f8ff7);border-color:transparent;color:#fff;
+  box-shadow:0 14px 30px -14px rgba(124,108,247,.9)}
+.btn.primary:hover{filter:brightness(1.07)}
+
+/* portrait card */
+.portrait{position:relative;background:linear-gradient(180deg,var(--surface),var(--surface-2));
+  border:1px solid var(--line);border-radius:22px;padding:16px;text-align:center;
+  box-shadow:0 30px 70px -40px rgba(0,0,0,1)}
+.portrait img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:16px;display:block}
+.portrait b{display:block;margin-top:13px;font-size:15px;font-weight:680;letter-spacing:-.01em}
+.portrait span.role{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.portrait .loc{display:block;font-size:11px;color:var(--faint,#6b7893);margin-top:6px}
+.avail{display:inline-flex;align-items:center;gap:6px;margin-top:11px;font-size:10.5px;font-weight:640;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--ok);background:rgba(52,211,153,.1);
+  border:1px solid rgba(52,211,153,.3);padding:4px 10px;border-radius:999px}
+.avail .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(52,211,153,.18)}
+.avail.busy{color:#f5b942;background:rgba(245,185,66,.1);border-color:rgba(245,185,66,.3)}
+.avail.busy .dot{background:#f5b942}
+
+/* stats */
+.stats{display:flex;flex-wrap:wrap;gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:112px}
 .stat b{display:block;font-size:19px;letter-spacing:-.02em}
 .stat span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.group{margin-top:34px}
+
+/* ---------------- demo grid ---------------- */
+.intro{margin:44px 0 6px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.intro h2{font-size:22px;font-weight:700;letter-spacing:-.025em}
+.intro p{color:var(--muted);font-size:13px;margin-top:5px;max-width:70ch}
+.group{margin-top:30px;content-visibility:auto;contain-intrinsic-size:auto 620px}
 .group h2{font-size:13px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
   display:flex;align-items:center;gap:9px;margin-bottom:14px}
 .group h2 span{font-size:10.5px;font-weight:700;letter-spacing:0;color:var(--brand-2);
@@ -51,7 +110,7 @@ h1,h2,h3,p{margin:0}
 .thumb{position:relative;aspect-ratio:16/10.4;background:var(--surface-2);border-bottom:1px solid var(--line);
   overflow:hidden;display:block}
 .thumb img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;
-  transition:transform .5s cubic-bezier(.2,.7,.3,1)}
+  background-size:cover;transition:transform .5s cubic-bezier(.2,.7,.3,1)}
 .card:hover .thumb img{transform:scale(1.03)}
 .thumb .num{position:absolute;left:12px;top:12px;font-size:10.5px;font-weight:700;letter-spacing:.08em;
   background:rgba(7,11,22,.82);color:#fff;padding:4px 9px;border-radius:8px}
@@ -72,37 +131,105 @@ h1,h2,h3,p{margin:0}
 .footrow .rows{font-size:10.5px;color:var(--muted)}
 .footrow .val{font-size:12px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
 .footrow .val small{font-weight:500;color:var(--muted);font-size:10px;margin-left:4px}
-.howto{margin-top:56px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px}
-.howto h2{font-size:20px;font-weight:700;letter-spacing:-.025em}
-.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:18px}
+
+/* ---------------- about ---------------- */
+.about{margin-top:60px;background:linear-gradient(180deg,var(--surface),rgba(15,22,38,.6));
+  border:1px solid var(--line);border-radius:26px;padding:30px;display:grid;
+  grid-template-columns:190px minmax(0,1fr);gap:30px;align-items:start}
+.about img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:18px;display:block;
+  box-shadow:0 0 0 1px rgba(255,255,255,.1),0 20px 44px -24px rgba(0,0,0,.9)}
+.about h2{font-size:22px;font-weight:700;letter-spacing:-.025em}
+.about p{color:var(--ink-2);font-size:14px;margin-top:12px;max-width:66ch}
+.about ul{margin:16px 0 0;padding:0;list-style:none;display:grid;gap:9px}
+.about li{font-size:13px;color:var(--ink-2);display:flex;gap:9px;align-items:flex-start}
+.about li::before{content:"";flex:0 0 6px;width:6px;height:6px;margin-top:7px;border-radius:50%;
+  background:linear-gradient(140deg,#a78bfa,#38bdf8)}
+.about .cta{margin-top:20px}
+
+.howto{margin-top:34px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px}
+.howto h2{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:16px}
 .cols h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--brand-2);margin-bottom:6px}
 .cols p{font-size:13px;color:var(--ink-2)}
 footer{margin-top:34px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;
   font-size:11.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:18px}
 code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-size:.92em}
-@media(max-width:600px){.wrap{padding:22px 14px 50px}.grid{grid-template-columns:1fr}.hero p{font-size:14.5px}}
+
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;gap:26px}
+  .portrait{max-width:280px}
+  .about{grid-template-columns:1fr;padding:22px}
+  .about img{max-width:190px}
+}
+@media(max-width:600px){
+  .wrap{padding:20px 14px 50px}
+  .grid{grid-template-columns:1fr}
+  .hero .lede{font-size:14.5px}
+  .top nav{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <span class="eyebrow">Google Sheets &middot; Apps Script &middot; HTML</span>
+  <!-- ===================== who / nav ===================== -->
+  <div class="top">
+    <div class="who">
+      <img src="assets/ammar-320.webp" srcset="assets/ammar-640.webp 2x" width="44" height="44"
+           alt="Ammar" fetchpriority="high" decoding="async">
+      <div>
+        <b>Ammar</b>
+        <span>Dashboards &amp; reporting · Google Sheets + Apps Script</span>
+      </div>
+    </div>
+    <nav>
+      <a href="#demos">30 demos</a>
+      <a href="#about">About</a>
+      <a href="#how">How it works</a>
+      <a href="mailto:ammarthemediamanager@gmail.com">Contact</a>
+    </nav>
+  </div>
 
+  <!-- ===================== hero ===================== -->
   <div class="hero">
-    <h1>Thirty dashboards.<br><em>One spreadsheet</em> each.</h1>
-    <p>
-      Every demo below is a working dashboard fed by a Google Sheet &mdash; no Looker Studio licence,
-      no connectors, no per-seat pricing. Each trade gets its own layout, its own measuring units and
-      the six numbers that actually decide its week, with 112,183 rows of seasonal,
-      benchmark-checked sample data behind it.
-    </p>
-    <div class="stats">
-      <div class="stat"><b>30</b><span>Industries</span></div>
-      <div class="stat"><b>112,183</b><span>Sample rows</span></div>
-      <div class="stat"><b>6</b><span>KPIs each</span></div>
-      <div class="stat"><b>8</b><span>Layouts</span></div>
-      <div class="stat"><b>18</b><span>Months history</span></div>
-      <div class="stat"><b>0</b><span>Dependencies</span></div>
+    <div>
+      <span class="eyebrow">Portfolio &middot; 2026 &middot; Karachi</span>
+      <h1>Thirty dashboards.<br><em>One spreadsheet</em> each.</h1>
+      <p class="lede">
+        This is the working portfolio of <b>Ammar</b> — I build business dashboards on
+        Google Sheets and Apps Script, so a business keeps the spreadsheet it already uses and gets a
+        proper screen on top of it. Every demo below is <b>live and clickable</b>: each trade has its own
+        layout, its own measuring units and the six numbers that actually decide its week.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="#demos">Browse the 30 demos</a>
+        <a class="btn" href="mailto:ammarthemediamanager@gmail.com">Start a project &rarr;</a>
+      </div>
+      <div class="stats" style="margin-top:26px">
+        <div class="stat"><b>30</b><span>Trades covered</span></div>
+        <div class="stat"><b>112,183</b><span>Sample rows</span></div>
+        <div class="stat"><b>8</b><span>Distinct layouts</span></div>
+        <div class="stat"><b>0</b><span>Licences needed</span></div>
+      </div>
+    </div>
+
+    <div class="portrait">
+      <img src="assets/ammar-320.webp" srcset="assets/ammar-640.webp 2x" width="320" height="320"
+           alt="Ammar, dashboard developer in Karachi, Pakistan" fetchpriority="high" decoding="async">
+      <b>Ammar</b>
+      <span class="role">Dashboards &amp; reporting · Google Sheets + Apps Script</span>
+      <span class="loc">Karachi, Pakistan</span>
+      <span><span class="avail"><span class="dot"></span>Available for new work</span></span>
+    </div>
+  </div>
+
+  <!-- ===================== demos ===================== -->
+  <div class="intro" id="demos">
+    <div>
+      <h2>Thirty industries, thirty different dashboards</h2>
+      <p>Click any card — it opens the live demo in a new tab, with an industry switcher so you can
+        jump between all 30. Every number comes from a generated spreadsheet of 18 months of trading.</p>
     </div>
   </div>
 
@@ -111,7 +238,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     <div class="grid">
     <a class="card" href="demos/01_Digital-Marketing-Agency.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/01_Digital-Marketing-Agency.png" alt="Digital Marketing Agency dashboard preview" loading="lazy">
+        <img src="thumbs/01_Digital-Marketing-Agency.webp" srcset="thumbs/01_Digital-Marketing-Agency.webp 1x" width="760" height="494"
+             alt="Digital Marketing Agency dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAACQAwCdASoYABAAPu1kqU2ppaOiMAgBMB2JZwAAYf98HBHsV8sAAP7tkth9BMMNA8MuwjQt7ZzCw+kNFHoFOdknCkNGK77KeU+hM6ZhEyOAAA==');background-size:cover;background-position:top center">
         <span class="num">01</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -130,7 +259,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/18_Recruitment-Agency.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/18_Recruitment-Agency.png" alt="Recruitment Agency dashboard preview" loading="lazy">
+        <img src="thumbs/18_Recruitment-Agency.webp" srcset="thumbs/18_Recruitment-Agency.webp 1x" width="760" height="494"
+             alt="Recruitment Agency dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAABwAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JZ2M+WeATjpnA+AAA/vB+MASzwZWpecudtR+ZzLmnnF4Swl9TlFiRztGbDuLf0IAAAA==');background-size:cover;background-position:top center">
         <span class="num">18</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -149,7 +280,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/24_Printing-Press-Offset.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/24_Printing-Press-Offset.png" alt="Printing Press · Offset dashboard preview" loading="lazy">
+        <img src="thumbs/24_Printing-Press-Offset.webp" srcset="thumbs/24_Printing-Press-Offset.webp 1x" width="760" height="494"
+             alt="Printing Press · Offset dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAACQAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JZwAAYf+DXMil6n0AAP7tkYEnvborsHXo6hY+q1QEqP/3zU6XFljUUIHdgAAA');background-size:cover;background-position:top center">
         <span class="num">24</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -173,7 +306,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     <div class="grid">
     <a class="card" href="demos/02_Real-Estate-Karachi.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/02_Real-Estate-Karachi.png" alt="Real Estate · Karachi dashboard preview" loading="lazy">
+        <img src="thumbs/02_Real-Estate-Karachi.webp" srcset="thumbs/02_Real-Estate-Karachi.webp 1x" width="760" height="494"
+             alt="Real Estate · Karachi dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADwAwCdASoYABAAPu1kqU2ppaOiMAgBMB2JZQDE2CIj4UPibcsjFagAAP7tmLd69ccMlh73CRzWjb8fhcc6IwEMX23sAEFjH44NV+RRM4AAAA==');background-size:cover;background-position:top center">
         <span class="num">02</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -192,7 +327,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/11_Construction-Contractor.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/11_Construction-Contractor.png" alt="Construction Contractor dashboard preview" loading="lazy">
+        <img src="thumbs/11_Construction-Contractor.webp" srcset="thumbs/11_Construction-Contractor.webp 1x" width="760" height="494"
+             alt="Construction Contractor dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAACQAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JZ1nyWeATjZx47/AAAP7wTbirTIPQMKG3sOFohpsn/uZOyx0VjJgNvFdvyJ4R5xmky5pvL7HarbDzEp0JnMUD8jvytUNz+z2gAA==');background-size:cover;background-position:top center">
         <span class="num">11</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -211,7 +348,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/28_Architecture-Design-Studio.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/28_Architecture-Design-Studio.png" alt="Architecture &amp; Design Studio dashboard preview" loading="lazy">
+        <img src="thumbs/28_Architecture-Design-Studio.webp" srcset="thumbs/28_Architecture-Design-Studio.webp 1x" width="760" height="494"
+             alt="Architecture &amp; Design Studio dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAACQAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JZwAAW5mHu0EQmWo4AP7tpEsNUmdpG9ba7mAfc64fwSA+U1fClfUCymflo1MTpR8AAA==');background-size:cover;background-position:top center">
         <span class="num">28</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -235,7 +374,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     <div class="grid">
     <a class="card" href="demos/04_Retail-Boutique-E-commerce.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/04_Retail-Boutique-E-commerce.png" alt="Retail Boutique · E-commerce dashboard preview" loading="lazy">
+        <img src="thumbs/04_Retail-Boutique-E-commerce.webp" srcset="thumbs/04_Retail-Boutique-E-commerce.webp 1x" width="760" height="494"
+             alt="Retail Boutique · E-commerce dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAwAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JZwDKAC0JvjUAAP7wfNej6GtnLR0qzKuwiXTpb4Kztrrtv1B5WlvhAykyb+DWsOqCZ//W9AA=');background-size:cover;background-position:top center">
         <span class="num">04</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -254,7 +395,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/05_Restaurant-Caf.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/05_Restaurant-Caf.png" alt="Restaurant &amp; Café dashboard preview" loading="lazy">
+        <img src="thumbs/05_Restaurant-Caf.webp" srcset="thumbs/05_Restaurant-Caf.webp 1x" width="760" height="494"
+             alt="Restaurant &amp; Café dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAABQAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JZ2HgADc2bWMAAAD+8HyHxzAqMczkN9CHT3gOTE6j9RJfdj/isfJYJORJZQKWgAA=');background-size:cover;background-position:top center">
         <span class="num">05</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -273,7 +416,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/26_Bakery-Confectionery.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/26_Bakery-Confectionery.png" alt="Bakery &amp; Confectionery dashboard preview" loading="lazy">
+        <img src="thumbs/26_Bakery-Confectionery.webp" srcset="thumbs/26_Bakery-Confectionery.webp 1x" width="760" height="494"
+             alt="Bakery &amp; Confectionery dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAACwAwCdASoYABAAPu1kqU2ppaQiMAgBMB2JZwAAV9KbwumZThFfwAD+7aj7BD3jm3syoluJH1GefRXhUa69kn7OMhCbh6TBxAAAAA==');background-size:cover;background-position:top center">
         <span class="num">26</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -292,7 +437,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/19_Community-Pharmacy.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/19_Community-Pharmacy.png" alt="Community Pharmacy dashboard preview" loading="lazy">
+        <img src="thumbs/19_Community-Pharmacy.webp" srcset="thumbs/19_Community-Pharmacy.webp 1x" width="760" height="494"
+             alt="Community Pharmacy dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAACQAwCdASoYABAAPu1kqU2ppaQiMAgBMB2JZwAAUqTypA4q5caAAP7tqPr6RfrhV4nBsKJsOLzEtaOKdr6LKfNldIxcoAAA');background-size:cover;background-position:top center">
         <span class="num">19</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -311,7 +458,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/21_Fuel-Station-Retail-Pump.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/21_Fuel-Station-Retail-Pump.png" alt="Fuel Station · Retail Pump dashboard preview" loading="lazy">
+        <img src="thumbs/21_Fuel-Station-Retail-Pump.webp" srcset="thumbs/21_Fuel-Station-Retail-Pump.webp 1x" width="760" height="494"
+             alt="Fuel Station · Retail Pump dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAABwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JZwDKADKLevzsw9gA/vB7a19SM4ghYDefljLD6FeGUhGhj2VKsOKcTwPoQDaEBEtmAA==');background-size:cover;background-position:top center">
         <span class="num">21</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -335,7 +484,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     <div class="grid">
     <a class="card" href="demos/09_Clinic-Dental.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/09_Clinic-Dental.png" alt="Clinic · Dental dashboard preview" loading="lazy">
+        <img src="thumbs/09_Clinic-Dental.webp" srcset="thumbs/09_Clinic-Dental.webp 1x" width="760" height="494"
+             alt="Clinic · Dental dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAABwAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JZwAAetdsPGcs54AA/vB6+6z03uAxA89si+CjLmkmAzXTjJrIYhwhWJY7R4+YnS6gB4eCsAA=');background-size:cover;background-position:top center">
         <span class="num">09</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -354,7 +505,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/29_Veterinary-Clinic.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/29_Veterinary-Clinic.png" alt="Veterinary Clinic dashboard preview" loading="lazy">
+        <img src="thumbs/29_Veterinary-Clinic.webp" srcset="thumbs/29_Veterinary-Clinic.webp 1x" width="760" height="494"
+             alt="Veterinary Clinic dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAADQAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JZwDImCP/1PsGWiKvpAAA/u2ZJUd/aJqjDQGsTPz51Ta2N5le2td6TuY37PYaggAAAA==');background-size:cover;background-position:top center">
         <span class="num">29</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -378,7 +531,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     <div class="grid">
     <a class="card" href="demos/03_Coaching-Courses.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/03_Coaching-Courses.png" alt="Coaching &amp; Courses dashboard preview" loading="lazy">
+        <img src="thumbs/03_Coaching-Courses.webp" srcset="thumbs/03_Coaching-Courses.webp 1x" width="760" height="494"
+             alt="Coaching &amp; Courses dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAACwAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JZwDImCP/1IHxI/GEAAD+7ZKm57U0XWVO4us5hYfSHQyVDmJ9JdulTM5e2R3gwE0n5LxEJWE8OihGHtwBV2AA');background-size:cover;background-position:top center">
         <span class="num">03</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -397,7 +552,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/08_School-Academy.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/08_School-Academy.png" alt="School · Academy dashboard preview" loading="lazy">
+        <img src="thumbs/08_School-Academy.webp" srcset="thumbs/08_School-Academy.webp 1x" width="760" height="494"
+             alt="School · Academy dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAADwAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JYwC+Wf/gPJMR372y7yQAAP7tmbMtyyHzVeXxaYmveJJeFENZo6Db4oXASI4YCedQ9v9dJQgScOeC5GswAA==');background-size:cover;background-position:top center">
         <span class="num">08</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -421,7 +578,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     <div class="grid">
     <a class="card" href="demos/07_Gym-Fitness-Studio.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/07_Gym-Fitness-Studio.png" alt="Gym · Fitness Studio dashboard preview" loading="lazy">
+        <img src="thumbs/07_Gym-Fitness-Studio.webp" srcset="thumbs/07_Gym-Fitness-Studio.webp 1x" width="760" height="494"
+             alt="Gym · Fitness Studio dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlAAAABXRUJQVlA4IEQAAABQAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JZ2VuWUEV7lOgAAD+8HtnicaTCdHKbY5uSO7JoIOn8HYUpCpOPmoztSSeAA==');background-size:cover;background-position:top center">
         <span class="num">07</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -440,7 +599,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/06_Salon-Spa-Aesthetics.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/06_Salon-Spa-Aesthetics.png" alt="Salon · Spa · Aesthetics dashboard preview" loading="lazy">
+        <img src="thumbs/06_Salon-Spa-Aesthetics.webp" srcset="thumbs/06_Salon-Spa-Aesthetics.webp 1x" width="760" height="494"
+             alt="Salon · Spa · Aesthetics dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAABwAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JZwAAUrU05Mv+9YAA/u2o+vyQNy3c7AP7XTaBGtUAojATARqA36vRJgWwBidFSCoMEkAA');background-size:cover;background-position:top center">
         <span class="num">06</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -459,7 +620,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/12_Event-Photography-Studio.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/12_Event-Photography-Studio.png" alt="Event Photography Studio dashboard preview" loading="lazy">
+        <img src="thumbs/12_Event-Photography-Studio.webp" srcset="thumbs/12_Event-Photography-Studio.webp 1x" width="760" height="494"
+             alt="Event Photography Studio dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAACQAwCdASoYABAAPu1kqU4ppaOiMAgBMB2JQAAMP9HmVgIqK4yAAP7tqEprr2R8eL/GShWOzvO17ZKz6i9Qj0bRODxvV7dMbJiAcRsKEPANFRaN8Mp7EmES6AAAAA==');background-size:cover;background-position:top center">
         <span class="num">12</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -483,7 +646,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     <div class="grid">
     <a class="card" href="demos/10_Travel-Agency.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/10_Travel-Agency.png" alt="Travel Agency dashboard preview" loading="lazy">
+        <img src="thumbs/10_Travel-Agency.webp" srcset="thumbs/10_Travel-Agency.webp 1x" width="760" height="494"
+             alt="Travel Agency dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAADwAwCdASoYABAAPu1kqU2ppaOiMAgBMB2JYwC+SB6Wg65KvcJbGmpgAP7tnznTO8jpCEhUsEd+EHUXBfkXWCQQV8oKSMW/vaoCVCFC51SzPdGsm5NlPrknpwAAAA==');background-size:cover;background-position:top center">
         <span class="num">10</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -502,7 +667,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/16_Boutique-Hotel-Islamabad.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/16_Boutique-Hotel-Islamabad.png" alt="Boutique Hotel · Islamabad dashboard preview" loading="lazy">
+        <img src="thumbs/16_Boutique-Hotel-Islamabad.webp" srcset="thumbs/16_Boutique-Hotel-Islamabad.webp 1x" width="760" height="494"
+             alt="Boutique Hotel · Islamabad dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAwAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JZwDImC0J23wAAP7wf/RRryydQOCjxS4aho5PQ3xNi2VBwLAVqGnSEqvj49cESvIvs1/AAAA=');background-size:cover;background-position:top center">
         <span class="num">16</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -526,7 +693,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     <div class="grid">
     <a class="card" href="demos/17_Manufacturing-Plant-Plastics.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/17_Manufacturing-Plant-Plastics.png" alt="Manufacturing Plant · Plastics dashboard preview" loading="lazy">
+        <img src="thumbs/17_Manufacturing-Plant-Plastics.webp" srcset="thumbs/17_Manufacturing-Plant-Plastics.webp 1x" width="760" height="494"
+             alt="Manufacturing Plant · Plastics dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRmYAAABXRUJQVlA4IFoAAADwAwCdASoYABAAPu1kqU2ppaQiMAgBMB2JZwDKACP/1rTZMuNxCLQAAP7tkJa2VutwhlZ5rUgdYZ+YzoQ7YLKIz1cDYAFg+32El38A30tImrAJ2EPuKwYAAAA=');background-size:cover;background-position:top center">
         <span class="num">17</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -545,7 +714,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/25_Garment-Manufacturing-Unit.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/25_Garment-Manufacturing-Unit.png" alt="Garment Manufacturing Unit dashboard preview" loading="lazy">
+        <img src="thumbs/25_Garment-Manufacturing-Unit.webp" srcset="thumbs/25_Garment-Manufacturing-Unit.webp 1x" width="760" height="494"
+             alt="Garment Manufacturing Unit dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAACQAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JZwDImCP/1IAhJsYAAP7tkmp0uaMNAaxNi+RxbA1TRlbVieDQAAAA');background-size:cover;background-position:top center">
         <span class="num">25</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -564,7 +735,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/20_Broiler-Poultry-Farm.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/20_Broiler-Poultry-Farm.png" alt="Broiler Poultry Farm dashboard preview" loading="lazy">
+        <img src="thumbs/20_Broiler-Poultry-Farm.webp" srcset="thumbs/20_Broiler-Poultry-Farm.webp 1x" width="760" height="494"
+             alt="Broiler Poultry Farm dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRkIAAABXRUJQVlA4IDYAAAAQAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JaQAAetdd/gAA/vCT7+JC4oJGHtmyO03TE3AAuAA=');background-size:cover;background-position:top center">
         <span class="num">20</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -583,7 +756,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/23_Auto-Workshop-Dealership.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/23_Auto-Workshop-Dealership.png" alt="Auto Workshop &amp; Dealership dashboard preview" loading="lazy">
+        <img src="thumbs/23_Auto-Workshop-Dealership.webp" srcset="thumbs/23_Auto-Workshop-Dealership.webp 1x" width="760" height="494"
+             alt="Auto Workshop &amp; Dealership dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRmoAAABXRUJQVlA4IF4AAABwAwCdASoYABAAPu1krU2ppaSiMAgBMB2JZ12AADc4QoIxcMAA/vB8h8hLKeU7+GQhUt+r09aMqXHvCgPRj3fOk8RgdwVrQFk6cNgebOV+vZWMTp00XsRLuFwxBAAA');background-size:cover;background-position:top center">
         <span class="num">23</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -602,7 +777,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/30_Solar-EPC-Installer.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/30_Solar-EPC-Installer.png" alt="Solar EPC Installer dashboard preview" loading="lazy">
+        <img src="thumbs/30_Solar-EPC-Installer.webp" srcset="thumbs/30_Solar-EPC-Installer.webp 1x" width="760" height="494"
+             alt="Solar EPC Installer dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlAAAABXRUJQVlA4IEQAAABQAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JaQAAetdg5lyeAAD+8HtncMeDQHz/IeefoHzbYEUo+47sKAtkky7G4AQAAA==');background-size:cover;background-position:top center">
         <span class="num">30</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -626,7 +803,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     <div class="grid">
     <a class="card" href="demos/13_SaaS-Software.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/13_SaaS-Software.png" alt="SaaS · Software dashboard preview" loading="lazy">
+        <img src="thumbs/13_SaaS-Software.webp" srcset="thumbs/13_SaaS-Software.webp 1x" width="760" height="494"
+             alt="SaaS · Software dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAAAwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JZQDImC0J23wAAP7wYpar5xwl2mJFGrUpVygH/UH8pCL6SODsb2/eKvwpHoHYiN7IAAAA');background-size:cover;background-position:top center">
         <span class="num">13</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -645,7 +824,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/22_Managed-IT-Services-MSP.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/22_Managed-IT-Services-MSP.png" alt="Managed IT Services · MSP dashboard preview" loading="lazy">
+        <img src="thumbs/22_Managed-IT-Services-MSP.webp" srcset="thumbs/22_Managed-IT-Services-MSP.webp 1x" width="760" height="494"
+             alt="Managed IT Services · MSP dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAACQAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JZwDE2CP/1G0ueMoAAP7tkFc+W6hBram9WAmBjMFUuokJiM5VCGh9UdaFxi/xJzPmwAAA');background-size:cover;background-position:top center">
         <span class="num">22</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -664,7 +845,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/14_Logistics-Freight.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/14_Logistics-Freight.png" alt="Logistics &amp; Freight dashboard preview" loading="lazy">
+        <img src="thumbs/14_Logistics-Freight.webp" srcset="thumbs/14_Logistics-Freight.webp 1x" width="760" height="494"
+             alt="Logistics &amp; Freight dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRkYAAABXRUJQVlA4IDoAAADwAgCdASoYABAAPu1iqU2ppaQiMAgBMB2JZwAAetcOgAD+8IBKiBR30UnjszK7NehpwnljUUmh8AAA');background-size:cover;background-position:top center">
         <span class="num">14</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -683,7 +866,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/27_Courier-Last-Mile-Delivery.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/27_Courier-Last-Mile-Delivery.png" alt="Courier · Last-Mile Delivery dashboard preview" loading="lazy">
+        <img src="thumbs/27_Courier-Last-Mile-Delivery.webp" srcset="thumbs/27_Courier-Last-Mile-Delivery.webp 1x" width="760" height="494"
+             alt="Courier · Last-Mile Delivery dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAACwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JZwDKACP/1G0pKTnaQAD+7Y/1CAYVNjQNhj8eZ+f/cMiOw5vtuPcVg/ql4AAA');background-size:cover;background-position:top center">
         <span class="num">27</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -702,7 +887,9 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </a>
     <a class="card" href="demos/15_Law-Firm.html" target="_blank" rel="noopener">
       <span class="thumb">
-        <img src="screenshots/15_Law-Firm.png" alt="Law Firm dashboard preview" loading="lazy">
+        <img src="thumbs/15_Law-Firm.webp" srcset="thumbs/15_Law-Firm.webp 1x" width="760" height="494"
+             alt="Law Firm dashboard preview" loading="lazy" decoding="async"
+             style="background-image:url('data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAACwAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JZQAAUqA04p5S3oVHgAD+7iOrSlWcn17evBGz/QMcdfTueqF//EKQjQ0se5B1ocAv0uYnSj4AAA==');background-size:cover;background-position:top center">
         <span class="num">15</span>
         <span class="open">Open live demo &rarr;</span>
       </span>
@@ -722,31 +909,59 @@ code{background:rgba(148,163,184,.14);padding:1px 5px;border-radius:5px;font-siz
     </div>
   </section>
 
-  <div class="howto">
-    <h2>How this is deployed</h2>
+  <!-- ===================== about ===================== -->
+  <section class="about" id="about">
+    <img src="assets/ammar-320.webp" srcset="assets/ammar-640.webp 2x" width="380" height="380"
+         alt="Ammar" loading="lazy" decoding="async">
+    <div>
+      <h2>About me</h2>
+      <p>
+        I'm Ammar, a dashboard developer in Karachi, Pakistan. Most small and
+        mid-sized businesses in Pakistan already run on a spreadsheet — the register, the order book,
+        the shift log — and most of the reporting pain comes from nobody turning that sheet into a
+        screen the owner can read in ten seconds.
+      </p>
+      <p>
+        So I build exactly that: one Google Sheet as the database, one Apps Script backend, one HTML
+        page. No Looker Studio licence, no connector fees, no per-seat pricing, and the owner can edit
+        the logic in plain JavaScript afterwards. The 30 demos here are the proof — same codebase,
+        completely different screens because a poultry farm and a law firm do not measure the same
+        things.
+      </p>
+      <ul>
+        <li><b>Discovery first.</b> We pick the six numbers your week actually turns on, before any chart is drawn.</li>
+        <li><b>Your sheet stays yours.</b> Loose heading matching means "Invoice No", "Ref" and "Reference" all work.</li>
+        <li><b>Delivered in about a week.</b> Seeded demo first so you approve the screen, then pointed at your live tab.</li>
+      </ul>
+      <div class="cta"><a class="btn primary" href="mailto:ammarthemediamanager@gmail.com">Email me</a></div>
+    </div>
+  </section>
+
+  <!-- ===================== how it works ===================== -->
+  <div class="howto" id="how">
+    <h2>How a project runs</h2>
     <div class="cols">
       <div>
-        <h3>1 &middot; Host the demos</h3>
-        <p>This folder is a static site. Push it to GitHub, then connect the repo to Netlify
-        (or Cloudflare Pages) &mdash; build command empty, publish directory <code>.</code>.
-        Every card opens its dashboard in a new tab.</p>
+        <h3>1 &middot; You pick a demo</h3>
+        <p>Choose the closest trade from the 30 above. We swap the sample data for yours and adjust the
+          six metrics until the first screen answers the question you ask every morning.</p>
       </div>
       <div>
-        <h3>2 &middot; Install a real client</h3>
-        <p>Copy <code>Code.gs</code>, <code>SeedData.gs</code> and <code>Index.html</code> into a
-        Google Sheet's Apps Script editor, run the seeder once, then deploy as a web app.</p>
+        <h3>2 &middot; I install it</h3>
+        <p><code>Code.gs</code>, <code>SeedData.gs</code> and <code>Index.html</code> go into your own
+          Google Sheet's Apps Script editor, deployed as a web app. It runs on your account, not mine.</p>
       </div>
       <div>
-        <h3>3 &middot; Swap the data</h3>
-        <p>Headings, tab names and the currency all live in <code>SETTINGS</code>. Point it at the
-        client's own tabs and the same dashboard starts reporting their numbers.</p>
+        <h3>3 &middot; It updates itself</h3>
+        <p>New rows appear on refresh — no rebuild, no export. You own the file, the sheet and the code,
+          and I stay reachable for changes.</p>
       </div>
     </div>
   </div>
 
   <footer>
-    <span>Business Dashboard Suite &middot; 30 industries &middot; built with Google Apps Script</span>
-    <span>Sample data is generated, not real client data.</span>
+    <span>&copy; 2026 Ammar &middot; Karachi &middot; built with Google Sheets + Apps Script</span>
+    <span>All demo data is generated sample data, not real client records.</span>
   </footer>
 </div>
 </body>

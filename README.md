@@ -17,7 +17,9 @@ no per-seat fee.
 ```
 business-dashboard-suite/
 ├── README.md                  ← you are here
-├── index.html                 ← THE DEPLOYED SITE (30 cards → demos/…). Push this folder and host it
+├── index.html                 ← THE DEPLOYED SITE (portfolio home, 30 cards → demos/…)
+├── assets/                    ← your portrait (320/640, webp + jpg)
+├── thumbs/                    ← 760px WebP card thumbnails, ~21 KB each (the PNGs are 750 KB)
 ├── apps-script/               ← install these three files
 │   ├── Code.gs                engine + the 30 industry definitions (KPIs, charts, tables, layout)
 │   ├── SeedData.gs            sample-data builder (112k rows, 18 months, seasonal, 90 tabs)
@@ -42,7 +44,8 @@ business-dashboard-suite/
 │   └── 08_CLOUDFLARE_PAGES.md   **step-by-step Cloudflare Pages deploy — start here**
 ├── tools/                     ← rebuild the demos + portfolio from the .gs files
 │   ├── build-demos.js         runs the real Apps Script code, validates, writes demos + screenshots
-│   └── build-portfolio.js     writes portfolio/index.html from the generated payloads
+│   ├── make-thumbs.py         screenshots → 760px WebP thumbnails + portrait sizes (Pillow)
+│   └── build-portfolio.js     writes index.html from the payloads (edit PROFILE block at the top)
 └── screenshots/               30 PNGs + portfolio + mobile proof (for listings/thumbnails)
 ```
 
@@ -188,7 +191,7 @@ That list is the pitch. The dashboard is the proof.
 
 ## Hosting
 
-The repo root **is** the website: `index.html` + `demos/` + `screenshots/`, with `_headers`,
+The repo root **is** the website: `index.html` + `demos/` + `thumbs/` + `assets/`, with `_headers`,
 `_redirects` and `404.html` already in place for Cloudflare Pages.
 
 **Cloudflare Pages (recommended — unlimited bandwidth, free, commercial use allowed):**

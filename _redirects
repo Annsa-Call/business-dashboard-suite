@@ -1,4 +1,4 @@
 # Cloudflare Pages redirects — https://developers.cloudflare.com/pages/configuration/redirects/
 # The deployed site is /index.html; the duplicate under /portfolio is for browsing off disk.
-/portfolio          /   301
+/portfolio             /   301
 /portfolio/index.html  /   301
